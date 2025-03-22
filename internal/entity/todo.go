@@ -3,7 +3,11 @@ package entity
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/go-playground/validator/v10"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -47,9 +51,41 @@ func (d *Date) UnmarshalJSON(bs []byte) error {
 }
 
 type Todo struct {
-	ID          int      `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Tags        []string `json:"tags"`
-	DueTime     Date     `json:"due_time"`
+	ID          int      `json:"id" validate:"omitempty"`
+	Title       string   `json:"title" validate:"required,min=3"`
+	Description string   `json:"description" validate:"required"`
+	Tags        []string `json:"tags" validate:"required"`
+	DueTime     *Date    `json:"due_time" validate:"required"`
+}
+
+func ValidateTodo(todo Todo) []string {
+	validate := validator.New()
+	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
+		name := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+		if name == "-" {
+			return ""
+		}
+		return name
+	})
+
+	err := validate.Struct(todo)
+	if err != nil {
+		var validationErrors validator.ValidationErrors
+		errors.As(err, &validationErrors)
+		var errList []string
+		for _, err := range validationErrors {
+			var msg string
+			switch err.Tag() {
+			case "required":
+				msg = fmt.Sprintf("Field '%s' is required", err.Field())
+			case "min":
+				msg = fmt.Sprintf("Filed '%s' must be least %s characters", err.Field(), err.Param())
+			default:
+				msg = fmt.Sprintf("Field %s failled validation on %s", err.Field(), err.Tag())
+			}
+			errList = append(errList, msg)
+		}
+		return errList
+	}
+	return nil
 }

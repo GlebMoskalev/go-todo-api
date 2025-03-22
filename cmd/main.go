@@ -3,15 +3,17 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"log/slog"
+	"net/http"
+	"os"
+
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+
 	"github.com/GlebMoskalev/go-todo-api/internal/config"
 	"github.com/GlebMoskalev/go-todo-api/internal/database"
 	"github.com/GlebMoskalev/go-todo-api/internal/middleware"
 	"github.com/GlebMoskalev/go-todo-api/internal/todo"
-	"github.com/go-chi/chi/v5"
-	chiMiddleware "github.com/go-chi/chi/v5/middleware"
-	"log/slog"
-	"net/http"
-	"os"
 )
 
 const (
@@ -55,6 +57,7 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.RequestIdHeader)
+	r.Use(middleware.RequestIdLogger(logger))
 
 	r.Route("/todos", func(r chi.Router) {
 		todo.RegisterRoutes(r, todoHandler)
