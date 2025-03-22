@@ -22,6 +22,8 @@ const (
 	envProd  = "prod"
 )
 
+const version = "v1"
+
 var flagConfig = flag.String("config", "./config/local.yaml", "path to the config file")
 
 func main() {
@@ -46,7 +48,6 @@ func main() {
 	router := setupRouter(logger, db, cfg)
 
 	http.ListenAndServe(":8888", router)
-	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 }
 
 func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
@@ -59,8 +60,10 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 	r.Use(middleware.RequestIdHeader)
 	r.Use(middleware.RequestIdLogger(logger))
 
-	r.Route("/todos", func(r chi.Router) {
-		todo.RegisterRoutes(r, todoHandler)
+	r.Route("/"+version, func(r chi.Router) {
+		r.Route("/todos", func(r chi.Router) {
+			todo.RegisterRoutes(r, todoHandler)
+		})
 	})
 
 	logger.Info("Starting server", "port", cfg.Database.Port)
