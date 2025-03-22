@@ -27,7 +27,7 @@ type Repository interface {
 	Create(ctx context.Context, todo entity.Todo) (int, error)
 	Update(ctx context.Context, todo entity.Todo) error
 	Delete(ctx context.Context, id int) error
-	GetAll(ctx context.Context, pagination entity.Pagination, filters Filters) ([]entity.Todo, error)
+	GetAll(ctx context.Context, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error)
 }
 
 type repository struct {
@@ -47,7 +47,7 @@ func (r *repository) Get(ctx context.Context, id int) (entity.Todo, error) {
 	row := r.db.QueryRowContext(ctx, "SELECT id, title, tags, description, duetime FROM todos WHERE id = $1", id)
 
 	var todo entity.Todo
-	if err := row.Scan(&todo.ID, &todo.Title, pq.Array(&todo.Tags), &todo.Description, &todo.DueTime); err != nil {
+	if err := row.Scan(&todo.ID, &todo.Title, pq.Array(&todo.Tags), &todo.Description, &todo.DueDate); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Warn("Todo not found")
 			return entity.Todo{}, ErrNotFound
@@ -96,7 +96,7 @@ func (r *repository) Create(ctx context.Context, todo entity.Todo) (int, error) 
 		todo.Title,
 		todo.Description,
 		pq.Array(todo.Tags),
-		todo.DueTime,
+		todo.DueDate,
 	).Scan(&id)
 	if err != nil {
 		logger.Error("Failed to insert todo into database", "error", err)
@@ -117,7 +117,7 @@ func (r *repository) Update(ctx context.Context, todo entity.Todo) error {
 		todo.Title,
 		todo.Description,
 		pq.Array(todo.Tags),
-		todo.DueTime,
+		todo.DueDate,
 		todo.ID,
 	)
 	if err != nil {
@@ -138,7 +138,7 @@ func (r *repository) Update(ctx context.Context, todo entity.Todo) error {
 	return nil
 }
 
-func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, filters Filters) ([]entity.Todo, error) {
+func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error) {
 	logger := middleware.GetLogger(ctx, &r.logger)
 	logger = logger.With("layer", "todo_repository", "operation", "GetAll")
 	if filters.DueTime != nil {
@@ -149,7 +149,6 @@ func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, f
 	}
 	logger.Debug("Attempting to fetching todos", "limit", pagination.Limit, "offset", pagination.Offset)
 
-	query := "SELECT * FROM todos"
 	var conditions []string
 	var args []any
 	argIndex := 1
@@ -165,10 +164,18 @@ func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, f
 		argIndex++
 	}
 
+	whereClause := ""
 	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
+		whereClause += " WHERE " + strings.Join(conditions, " AND ")
 	}
 
+	countQuery := "SELECT COUNT(*) FROM TODOS" + whereClause
+	logger.Debug("Executing count query", "query", countQuery, "args", args)
+
+	var total int
+	err := r.db.QueryRowContext(ctx, countQuery, args...).Scan(&total)
+
+	query := "SELECT * FROM todos" + whereClause
 	logger.Debug("Executing query", "query", query, "args", args)
 
 	query += fmt.Sprintf(" LIMIT $%d OFFSET $%d", argIndex, argIndex+1)
@@ -178,7 +185,7 @@ func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, f
 
 	if err != nil {
 		logger.Error("Failed to query todos", "error", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	defer func(rows *sql.Rows) {
@@ -191,17 +198,17 @@ func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, f
 	var all []entity.Todo
 	for rows.Next() {
 		var todo entity.Todo
-		if err := rows.Scan(&todo.ID, &todo.Title, &todo.Description, pq.Array(&todo.Tags), &todo.DueTime); err != nil {
+		if err := rows.Scan(&todo.ID, &todo.Title, &todo.Description, pq.Array(&todo.Tags), &todo.DueDate); err != nil {
 			r.logger.Error("Failed to scan todo row", "error", err)
-			return nil, err
+			return nil, 0, err
 		}
 		all = append(all, todo)
 	}
 	if err := rows.Err(); err != nil {
 		r.logger.Error("Error occurred during rows iteration", "error", err)
-		return nil, err
+		return nil, 0, err
 	}
 
 	logger.Info("Successfully fetching todos")
-	return all, nil
+	return all, total, nil
 }

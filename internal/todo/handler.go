@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -81,6 +82,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendResponse[any](w, http.StatusOK, "Successfully delete", nil)
+	logger.Info("Successfully delete todo")
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +117,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	}{
 		Id: id,
 	})
+	logger.Info("Successfully create todo")
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
@@ -150,4 +153,71 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendResponse[any](w, http.StatusOK, "Successfully update", nil)
+	logger.Info("Successfully update todo")
+}
+
+func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
+	logger := middleware.GetLogger(r.Context(), h.logger)
+	logger = logger.With("layer", "todo_handler", "operation", "GetAll")
+	logger.Debug("Attempting to get todos")
+
+	query := r.URL.Query()
+	limit := entity.DefaultLimit
+	offset := entity.DefaultOffset
+
+	if limitStr := query.Get("limit"); limitStr != "" {
+		limitInt, err := strconv.Atoi(limitStr)
+		if err != nil {
+			logger.Warn("Invalid limit parameter", "limit", limitStr)
+			response.SendResponse[any](w, http.StatusBadRequest, "Invalid limit parameter", nil)
+			return
+		}
+		limit = limitInt
+	}
+	if offsetStr := query.Get("offset"); offsetStr != "" {
+		offsetInt, err := strconv.Atoi(offsetStr)
+		if err != nil {
+			logger.Warn("Invalid limit parameter", "limit", offsetStr)
+			response.SendResponse[any](w, http.StatusBadRequest, "Invalid offset parameter", nil)
+			return
+		}
+		offset = offsetInt
+	}
+	pagination := entity.Pagination{Offset: offset, Limit: limit}
+
+	var filters Filters
+	if dueDateStr := query.Get("due_date"); dueDateStr != "" {
+		dueDate, err := time.Parse(time.DateOnly, dueDateStr)
+		if err != nil {
+			logger.Warn("Invalid due_date parameter", "due_date", dueDateStr)
+			response.SendResponse[any](w, http.StatusBadRequest, "Invalid due_date format. Use YYYY-MM-DD", nil)
+			return
+		}
+		date := entity.Date{Time: dueDate}
+		filters.DueTime = &date
+	}
+
+	if tagsStr := query.Get("tags"); tagsStr != "" {
+		tags := strings.Split(tagsStr, ",")
+		var cleanedTags []string
+		for _, tag := range tags {
+			tag = strings.TrimSpace(tag)
+			if tag != "" {
+				cleanedTags = append(cleanedTags, tag)
+			}
+		}
+		if len(cleanedTags) > 0 {
+			filters.Tags = cleanedTags
+		}
+	}
+
+	todos, total, err := h.repo.GetAll(r.Context(), pagination, filters)
+	if err != nil {
+		logger.Error("Failed to fetch todos", "error", err)
+		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		return
+	}
+
+	response.SendListResponse(w, http.StatusOK, "Ok", pagination, total, todos)
+	logger.Info("Successfully fetched todos")
 }

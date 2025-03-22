@@ -55,7 +55,7 @@ type Todo struct {
 	Title       string   `json:"title" validate:"required,min=3"`
 	Description string   `json:"description" validate:"required"`
 	Tags        []string `json:"tags" validate:"required"`
-	DueTime     *Date    `json:"due_time" validate:"required"`
+	DueDate     *Date    `json:"due_date" validate:"required"`
 }
 
 func ValidateTodo(todo Todo) []string {
