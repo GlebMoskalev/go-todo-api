@@ -1,17 +1,17 @@
 package main
 
 import (
-	"context"
+	"database/sql"
 	"flag"
-	"fmt"
-	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	"os"
-	"time"
-
 	"github.com/GlebMoskalev/go-todo-api/internal/config"
 	"github.com/GlebMoskalev/go-todo-api/internal/database"
+	"github.com/GlebMoskalev/go-todo-api/internal/middleware"
 	"github.com/GlebMoskalev/go-todo-api/internal/todo"
+	"github.com/go-chi/chi/v5"
+	chiMiddleware "github.com/go-chi/chi/v5/middleware"
 	"log/slog"
+	"net/http"
+	"os"
 )
 
 const (
@@ -41,17 +41,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	todoRepo := todo.NewRepository(db, *logger)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	router := setupRouter(logger, db, cfg)
 
-	id, err := todoRepo.Create(ctx, entity.Todo{
-		Title:       "test todo",
-		Description: "",
-		Tags:        []string{"test"},
-		DueTime:     entity.Date{Time: time.Date(2020, 12, 3, 0, 0, 0, 0, time.UTC)},
+	http.ListenAndServe(":8888", router)
+	//ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+}
+
+func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
+	todoRepo := todo.NewRepository(db, *logger)
+	todoHandler := todo.NewHandler(todoRepo, logger)
+
+	r := chi.NewRouter()
+
+	r.Use(chiMiddleware.RequestID)
+	r.Use(middleware.RequestIdHeader)
+
+	r.Route("/todos", func(r chi.Router) {
+		todo.RegisterRoutes(r, todoHandler)
 	})
-	fmt.Println(id, err)
+
+	logger.Info("Starting server", "port", cfg.Database.Port)
+	return r
 }
 
 func setupLogger(env string) *slog.Logger {
