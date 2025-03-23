@@ -98,7 +98,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if validationErrors := entity.ValidateTodo(todo); validationErrors != nil {
+	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
 		response.SendResponse[any](w, http.StatusBadRequest, msg, nil)
@@ -133,7 +133,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if validationErrors := entity.ValidateTodo(todo); validationErrors != nil {
+	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
 		response.SendResponse[any](w, http.StatusBadRequest, msg, nil)
