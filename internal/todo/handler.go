@@ -1,11 +1,11 @@
 package todo
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity/response"
+	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -91,10 +91,10 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Attempting to create todo")
 
 	var todo entity.Todo
-	err := json.NewDecoder(r.Body).Decode(&todo)
+	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
-		logger.Warn("Failed to decode json")
-		response.SendResponse[any](w, http.StatusBadRequest, "Invalid todo", nil)
+		logger.Warn("Failed to decode json", "error", err)
+		response.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
@@ -126,10 +126,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Attempting to update todo")
 
 	var todo entity.Todo
-	err := json.NewDecoder(r.Body).Decode(&todo)
+	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
-		logger.Warn("Failed to decode json")
-		response.SendResponse[any](w, http.StatusBadRequest, "Invalid todo", nil)
+		logger.Warn("Failed to decode json", "error", err)
+		response.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
