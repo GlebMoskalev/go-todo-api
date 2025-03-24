@@ -51,14 +51,13 @@ func main() {
 }
 
 func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
-	todoRepo := todo.NewRepository(db, *logger)
+	todoRepo := todo.NewRepository(db, logger)
 	todoHandler := todo.NewHandler(todoRepo, logger)
 
 	r := chi.NewRouter()
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.RequestIdHeader)
-	r.Use(middleware.RequestIdLogger(logger))
 
 	r.Route("/"+version, func(r chi.Router) {
 		r.Route("/todos", func(r chi.Router) {

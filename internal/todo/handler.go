@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-
-	"github.com/GlebMoskalev/go-todo-api/internal/middleware"
 )
 
 type Handler struct {
@@ -27,8 +25,7 @@ func NewHandler(repo Repository, logger *slog.Logger) *Handler {
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r.Context(), h.logger)
-	logger = logger.With("layer", "todo_handler", "operation", "Get")
+	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Get")
 	logger.Debug("Attempting to fetching todo")
 
 	idStr := chi.URLParam(r, "id")
@@ -57,8 +54,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r.Context(), h.logger)
-	logger = logger.With("layer", "todo_handler", "operation", "Delete")
+	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Delete")
 	logger.Debug("Attempting to delete todo")
 
 	idStr := chi.URLParam(r, "id")
@@ -86,8 +82,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r.Context(), h.logger)
-	logger = logger.With("layer", "todo_handler", "operation", "Create")
+	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Create")
 	logger.Debug("Attempting to create todo")
 
 	var todo entity.Todo
@@ -121,8 +116,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r.Context(), h.logger)
-	logger = logger.With("layer", "todo_handler", "operation", "Update")
+	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Update")
 	logger.Debug("Attempting to update todo")
 
 	var todo entity.Todo
@@ -157,8 +151,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
-	logger := middleware.GetLogger(r.Context(), h.logger)
-	logger = logger.With("layer", "todo_handler", "operation", "GetAll")
+	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "GetAll")
 	logger.Debug("Attempting to get todos")
 
 	query := r.URL.Query()

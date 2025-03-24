@@ -5,12 +5,12 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"github.com/lib/pq"
 	"log/slog"
 	"strings"
 
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	"github.com/GlebMoskalev/go-todo-api/internal/middleware"
 )
 
 var (
@@ -32,16 +32,15 @@ type Repository interface {
 
 type repository struct {
 	db     *sql.DB
-	logger slog.Logger
+	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger slog.Logger) Repository {
+func NewRepository(db *sql.DB, logger *slog.Logger) Repository {
 	return &repository{db: db, logger: logger}
 }
 
 func (r *repository) Get(ctx context.Context, id int) (entity.Todo, error) {
-	logger := middleware.GetLogger(ctx, &r.logger)
-	logger = logger.With("layer", "todo_repository", "operation", "Get", "todo_id", id)
+	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Get", "todo_id", id)
 	logger.Debug("Attempting to fetching todo")
 
 	row := r.db.QueryRowContext(ctx, "SELECT id, title, tags, description, duetime FROM todos WHERE id = $1", id)
@@ -61,8 +60,7 @@ func (r *repository) Get(ctx context.Context, id int) (entity.Todo, error) {
 }
 
 func (r *repository) Delete(ctx context.Context, id int) error {
-	logger := middleware.GetLogger(ctx, &r.logger)
-	logger = logger.With("layer", "todo_repository", "operation", "Delete", "todo_id", id)
+	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Delete", "todo_id", id)
 	logger.Debug("Attempting to delete todo")
 
 	res, err := r.db.ExecContext(ctx, "DELETE FROM todos WHERE id = $1", id)
@@ -86,8 +84,7 @@ func (r *repository) Delete(ctx context.Context, id int) error {
 }
 
 func (r *repository) Create(ctx context.Context, todo entity.Todo) (int, error) {
-	logger := middleware.GetLogger(ctx, &r.logger)
-	logger = logger.With("layer", "todo_repository", "operation", "Create")
+	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Create")
 	logger.Debug("Attempting to create todo", "title", todo.Title)
 
 	var id int
@@ -108,8 +105,7 @@ func (r *repository) Create(ctx context.Context, todo entity.Todo) (int, error) 
 }
 
 func (r *repository) Update(ctx context.Context, todo entity.Todo) error {
-	logger := middleware.GetLogger(ctx, &r.logger)
-	logger = logger.With("layer", "todo_repository", "operation", "Update")
+	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Update")
 	logger.Debug("Attempting to update todo", "todo_id", todo.ID)
 
 	res, err := r.db.ExecContext(ctx, "UPDATE todos SET title = $1, description = $2, tags = $3, duetime = $4 "+
@@ -139,8 +135,7 @@ func (r *repository) Update(ctx context.Context, todo entity.Todo) error {
 }
 
 func (r *repository) GetAll(ctx context.Context, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error) {
-	logger := middleware.GetLogger(ctx, &r.logger)
-	logger = logger.With("layer", "todo_repository", "operation", "GetAll")
+	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "GetAll")
 	if filters.DueTime != nil {
 		logger = logger.With("due_time", *filters.DueTime)
 	}
