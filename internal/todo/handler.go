@@ -39,12 +39,13 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger = logger.With("todo_id", id)
 	todo, err := h.repo.Get(r.Context(), id)
 	if err != nil {
-		logger.Error("Failed to get todo", "error", err)
 		if errors.Is(err, ErrNotFound) {
+			logger.Warn("Todo not found")
 			response.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
 
+		logger.Error("Failed to get todo", "error", err)
 		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
 		return
 	}
@@ -136,12 +137,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err = h.repo.Update(r.Context(), todo)
 	if err != nil {
-		logger.Error("Failed to update todo")
 		if errors.Is(err, ErrNotFound) {
+			logger.Error("Todo not found")
 			response.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
 
+		logger.Error("Failed to update todo")
 		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
 		return
 	}
