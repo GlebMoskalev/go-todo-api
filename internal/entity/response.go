@@ -1,8 +1,7 @@
-package response
+package entity
 
 import (
 	"encoding/json"
-	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"net/http"
 )
 
@@ -39,7 +38,7 @@ func SendResponse[T any](w http.ResponseWriter, statusCode int, message string, 
 }
 
 func SendListResponse[T any](
-	w http.ResponseWriter, statusCode int, message string, pagination entity.Pagination, total int, results []T) {
+	w http.ResponseWriter, statusCode int, message string, pagination Pagination, total int, results []T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	response := ListResponse[T]{

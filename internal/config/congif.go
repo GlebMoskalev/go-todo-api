@@ -7,10 +7,13 @@ import (
 )
 
 type Config struct {
-	Env      string `yaml:"env"`
+	Env    string `yaml:"env"`
+	Server struct {
+		Port string `yaml:"port"`
+	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
+		Port     string `yaml:"port"`
 		Name     string `yaml:"name"`
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	"github.com/GlebMoskalev/go-todo-api/internal/entity/response"
+	todo2 "github.com/GlebMoskalev/go-todo-api/internal/repository"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
@@ -16,11 +16,11 @@ import (
 )
 
 type Handler struct {
-	repo   Repository
+	repo   todo2.TodoRepository
 	logger *slog.Logger
 }
 
-func NewHandler(repo Repository, logger *slog.Logger) *Handler {
+func NewHandler(repo todo2.TodoRepository, logger *slog.Logger) *Handler {
 	return &Handler{repo: repo, logger: logger}
 }
 
@@ -30,8 +30,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		logger.Error("Username not found in context")
-		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		logger.Error("Username not found in contextutils")
+		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
@@ -39,25 +39,25 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		response.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
 		return
 	}
 
 	logger = logger.With("todo_id", id, "username", username)
 	todo, err := h.repo.Get(r.Context(), username, id)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, todo2.ErrNotFound) {
 			logger.Warn("Todo not found")
-			response.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
 
 		logger.Error("Failed to get todo", "error", err)
-		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	response.SendResponse(w, http.StatusOK, "Ok", todo)
+	entity.SendResponse(w, http.StatusOK, "Ok", todo)
 	logger.Info("Successfully fetched todo")
 }
 
@@ -67,8 +67,8 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		logger.Error("Username not found in context")
-		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		logger.Error("Username not found in contextutils")
+		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 
@@ -76,7 +76,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		response.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
 		return
 	}
 
@@ -84,15 +84,15 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	err = h.repo.Delete(r.Context(), username, id)
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
-		if errors.Is(err, ErrNotFound) {
-			response.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+		if errors.Is(err, todo2.ErrNotFound) {
+			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
-		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	response.SendResponse[any](w, http.StatusOK, "Successfully delete", nil)
+	entity.SendResponse[any](w, http.StatusOK, "Successfully delete", nil)
 	logger.Info("Successfully delete todo")
 }
 
@@ -102,8 +102,8 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		logger.Error("Username not found in context")
-		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		logger.Error("Username not found in contextutils")
+		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 	logger = logger.With("username", username)
@@ -112,25 +112,25 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
 		logger.Warn("Failed to decode json", "error", err)
-		response.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
 	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
-		response.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
 		return
 	}
 
 	id, err := h.repo.Create(r.Context(), username, todo)
 	if err != nil {
 		logger.Error("Failed to create todo")
-		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	response.SendResponse(w, http.StatusOK, "Successfully create", struct {
+	entity.SendResponse(w, http.StatusOK, "Successfully create", struct {
 		Id int `json:"id"`
 	}{
 		Id: id,
@@ -144,8 +144,8 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		logger.Error("Username not found in context")
-		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		logger.Error("Username not found in contextutils")
+		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 	logger = logger.With("username", username)
@@ -154,31 +154,31 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
 		logger.Warn("Failed to decode json", "error", err)
-		response.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
 	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
-		response.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
 		return
 	}
 
 	err = h.repo.Update(r.Context(), username, todo)
 	if err != nil {
-		if errors.Is(err, ErrNotFound) {
+		if errors.Is(err, todo2.ErrNotFound) {
 			logger.Error("Todo not found")
-			response.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
 
 		logger.Error("Failed to update todo")
-		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	response.SendResponse[any](w, http.StatusOK, "Successfully update", nil)
+	entity.SendResponse[any](w, http.StatusOK, "Successfully update", nil)
 	logger.Info("Successfully update todo")
 }
 
@@ -188,8 +188,8 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	username, ok := r.Context().Value("username").(string)
 	if !ok {
-		logger.Error("Username not found in context")
-		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		logger.Error("Username not found in contextutils")
+		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
 	logger = logger.With("username", username)
@@ -202,7 +202,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		limitInt, err := strconv.Atoi(limitStr)
 		if err != nil {
 			logger.Warn("Invalid limit parameter", "limit", limitStr)
-			response.SendResponse[any](w, http.StatusBadRequest, "Invalid limit parameter", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid limit parameter", nil)
 			return
 		}
 		limit = limitInt
@@ -211,19 +211,19 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		offsetInt, err := strconv.Atoi(offsetStr)
 		if err != nil {
 			logger.Warn("Invalid limit parameter", "limit", offsetStr)
-			response.SendResponse[any](w, http.StatusBadRequest, "Invalid offset parameter", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid offset parameter", nil)
 			return
 		}
 		offset = offsetInt
 	}
 	pagination := entity.Pagination{Offset: offset, Limit: limit}
 
-	var filters Filters
+	var filters todo2.Filters
 	if dueDateStr := query.Get("due_date"); dueDateStr != "" {
 		dueDate, err := time.Parse(time.DateOnly, dueDateStr)
 		if err != nil {
 			logger.Warn("Invalid due_date parameter", "due_date", dueDateStr)
-			response.SendResponse[any](w, http.StatusBadRequest, "Invalid due_date format. Use YYYY-MM-DD", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid due_date format. Use YYYY-MM-DD", nil)
 			return
 		}
 		date := entity.Date{Time: dueDate}
@@ -247,10 +247,10 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	todos, total, err := h.repo.GetAll(r.Context(), username, pagination, filters)
 	if err != nil {
 		logger.Error("Failed to fetch todos", "error", err)
-		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	response.SendListResponse(w, http.StatusOK, "Ok", pagination, total, todos)
+	entity.SendListResponse(w, http.StatusOK, "Ok", pagination, total, todos)
 	logger.Info("Successfully fetched todos")
 }

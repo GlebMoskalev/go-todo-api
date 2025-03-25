@@ -1,4 +1,4 @@
-package todo
+package repository
 
 import (
 	"context"
@@ -22,7 +22,7 @@ type Filters struct {
 	Tags    []string
 }
 
-type Repository interface {
+type TodoRepository interface {
 	Get(ctx context.Context, username string, id int) (entity.Todo, error)
 	Create(ctx context.Context, username string, todo entity.Todo) (int, error)
 	Update(ctx context.Context, username string, todo entity.Todo) error
@@ -30,16 +30,16 @@ type Repository interface {
 	GetAll(ctx context.Context, username string, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error)
 }
 
-type repository struct {
+type todoRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) Repository {
-	return &repository{db: db, logger: logger}
+func NewTodoRepository(db *sql.DB, logger *slog.Logger) TodoRepository {
+	return &todoRepository{db: db, logger: logger}
 }
 
-func (r *repository) Get(ctx context.Context, username string, id int) (entity.Todo, error) {
+func (r *todoRepository) Get(ctx context.Context, username string, id int) (entity.Todo, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Get", "todo_id", id)
 	logger.Debug("Attempting to fetching todo")
 
@@ -62,7 +62,7 @@ func (r *repository) Get(ctx context.Context, username string, id int) (entity.T
 	return todo, nil
 }
 
-func (r *repository) Delete(ctx context.Context, username string, id int) error {
+func (r *todoRepository) Delete(ctx context.Context, username string, id int) error {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Delete", "todo_id", id)
 	logger.Debug("Attempting to delete todo")
 
@@ -88,7 +88,7 @@ func (r *repository) Delete(ctx context.Context, username string, id int) error 
 	return nil
 }
 
-func (r *repository) Create(ctx context.Context, username string, todo entity.Todo) (int, error) {
+func (r *todoRepository) Create(ctx context.Context, username string, todo entity.Todo) (int, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Create")
 	logger.Debug("Attempting to create todo", "title", todo.Title)
 
@@ -111,7 +111,7 @@ func (r *repository) Create(ctx context.Context, username string, todo entity.To
 	return id, nil
 }
 
-func (r *repository) Update(ctx context.Context, username string, todo entity.Todo) error {
+func (r *todoRepository) Update(ctx context.Context, username string, todo entity.Todo) error {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "Update")
 	logger.Debug("Attempting to update todo", "todo_id", todo.ID)
 
@@ -142,7 +142,7 @@ func (r *repository) Update(ctx context.Context, username string, todo entity.To
 	return nil
 }
 
-func (r *repository) GetAll(ctx context.Context, username string, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error) {
+func (r *todoRepository) GetAll(ctx context.Context, username string, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "GetAll")
 	if filters.DueTime != nil {
 		logger = logger.With("due_time", *filters.DueTime)

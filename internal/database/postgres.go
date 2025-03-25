@@ -9,7 +9,7 @@ import (
 )
 
 func InitPostgres(cfg config.Config) (*sql.DB, error) {
-	dbUrl := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=disable",
+	dbUrl := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable",
 		cfg.Database.User,
 		cfg.Database.Password,
 		cfg.Database.Name,

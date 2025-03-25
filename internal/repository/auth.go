@@ -1,4 +1,4 @@
-package auth
+package repository
 
 import (
 	"context"
@@ -15,21 +15,21 @@ var (
 	ErrUsernameExists = errors.New("username already exists")
 )
 
-type Repository interface {
+type AuthRepository interface {
 	Create(ctx context.Context, user entity.UserLogin) error
 	GetByUsername(ctx context.Context, username string) (entity.User, error)
 }
 
-type repository struct {
+type authRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) Repository {
-	return &repository{db: db, logger: logger}
+func NewRepository(db *sql.DB, logger *slog.Logger) AuthRepository {
+	return &authRepository{db: db, logger: logger}
 }
 
-func (r *repository) Create(ctx context.Context, user entity.UserLogin) error {
+func (r *authRepository) Create(ctx context.Context, user entity.UserLogin) error {
 	logger := utils.SetupLogger(ctx, r.logger, "auth_repository", "Create", "username", user.Username)
 	logger.Debug("Attempting to create user")
 
@@ -54,7 +54,7 @@ func (r *repository) Create(ctx context.Context, user entity.UserLogin) error {
 	return nil
 }
 
-func (r *repository) GetByUsername(ctx context.Context, username string) (entity.User, error) {
+func (r *authRepository) GetByUsername(ctx context.Context, username string) (entity.User, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "auth_repository", "Create", "username", username)
 	logger.Debug("Attempting to fetch user")
 

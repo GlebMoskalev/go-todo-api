@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	"context"
@@ -12,21 +12,21 @@ import (
 	"time"
 )
 
-type TokenService struct {
+type AuthService struct {
 	db     *sql.DB
 	config config.Config
 	logger *slog.Logger
 }
 
-func NewTokenService(db *sql.DB, config config.Config, logger *slog.Logger) *TokenService {
-	return &TokenService{
+func NewTokenService(db *sql.DB, config config.Config, logger *slog.Logger) *AuthService {
+	return &AuthService{
 		db:     db,
 		config: config,
 		logger: logger,
 	}
 }
 
-func (ts *TokenService) GenerateTokenPair(username string) (string, string, error) {
+func (ts *AuthService) GenerateTokenPair(username string) (string, string, error) {
 	accessToken, err := ts.generateAccessToken(username)
 	if err != nil {
 		return "", "", err
@@ -39,7 +39,7 @@ func (ts *TokenService) GenerateTokenPair(username string) (string, string, erro
 	return accessToken, refreshToken, nil
 }
 
-func (ts *TokenService) generateAccessToken(username string) (string, error) {
+func (ts *AuthService) generateAccessToken(username string) (string, error) {
 	payload := jwt.MapClaims{
 		"username": username,
 		"exp":      time.Now().Add(time.Duration(ts.config.Token.AccessTokenExpire) * time.Minute).Unix(),
@@ -49,7 +49,7 @@ func (ts *TokenService) generateAccessToken(username string) (string, error) {
 	return token.SignedString([]byte(ts.config.Token.AccessTokenSecret))
 }
 
-func (ts *TokenService) generateRefreshToken(username string) (string, error) {
+func (ts *AuthService) generateRefreshToken(username string) (string, error) {
 	payload := jwt.MapClaims{
 		"username": username,
 		"exp":      time.Now().Add(time.Duration(ts.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
@@ -67,7 +67,7 @@ func (ts *TokenService) generateRefreshToken(username string) (string, error) {
 	return refreshToken, err
 }
 
-func (ts *TokenService) saveRefreshToken(ctx context.Context, username, token string) error {
+func (ts *AuthService) saveRefreshToken(ctx context.Context, username, token string) error {
 	logger := utils.SetupLogger(ctx, ts.logger, "token_service", "saveRefreshToken")
 
 	var userID int
@@ -97,7 +97,7 @@ func (ts *TokenService) saveRefreshToken(ctx context.Context, username, token st
 	return nil
 }
 
-func (ts *TokenService) ValidateAccessToken(tokenString string) (string, error) {
+func (ts *AuthService) ValidateAccessToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(ts.config.Token.AccessTokenSecret), nil
 	})
@@ -111,7 +111,7 @@ func (ts *TokenService) ValidateAccessToken(tokenString string) (string, error) 
 	return "", errors.New("invalid token")
 }
 
-func (ts *TokenService) ValidateRefreshToken(tokenString string) (string, error) {
+func (ts *AuthService) ValidateRefreshToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(ts.config.Token.RefreshTokenSecret), nil
 	})
@@ -125,7 +125,7 @@ func (ts *TokenService) ValidateRefreshToken(tokenString string) (string, error)
 	return "", errors.New("invalid token")
 }
 
-func (ts *TokenService) RefreshTokens(refreshTokenString string) (string, string, error) {
+func (ts *AuthService) RefreshTokens(refreshTokenString string) (string, string, error) {
 	token, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(ts.config.Token.RefreshTokenSecret), nil
 	})
@@ -154,7 +154,7 @@ func (ts *TokenService) RefreshTokens(refreshTokenString string) (string, string
 	return ts.GenerateTokenPair(user.Username)
 }
 
-func (ts *TokenService) getUserByUsername(username string) (entity.User, error) {
+func (ts *AuthService) getUserByUsername(username string) (entity.User, error) {
 	var user entity.User
 	err := ts.db.QueryRow(
 		"SELECT username, passwordhash FROM users WHERE username = $1",
