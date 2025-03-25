@@ -6,14 +6,15 @@ import (
 	"github.com/GlebMoskalev/go-todo-api/internal/config"
 	"github.com/GlebMoskalev/go-todo-api/internal/repository"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"log/slog"
 	"time"
 )
 
 type TokenService interface {
-	GenerateTokenPair(username string, userID int) (string, string, error)
-	ValidateAccessToken(tokenString string) (string, error)
-	ValidateRefreshToken(tokenString string) (string, error)
+	GenerateTokenPair(id uuid.UUID) (string, string, error)
+	ValidateAccessToken(tokenString string) (uuid.UUID, error)
+	ValidateRefreshToken(tokenString string) (uuid.UUID, error)
 	RefreshTokens(refreshTokenString string) (string, string, error)
 }
 
@@ -34,13 +35,13 @@ func NewTokenService(userRepo repository.UserRepository, tokenRepo repository.To
 	}
 }
 
-func (s *tokenService) GenerateTokenPair(username string, userID int) (string, string, error) {
-	accessToken, err := s.generateAccessToken(username)
+func (s *tokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) {
+	accessToken, err := s.generateAccessToken(id)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := s.generateRefreshToken(username, userID)
+	refreshToken, err := s.generateRefreshToken(id)
 	if err != nil {
 		return "", "", err
 	}
@@ -48,20 +49,20 @@ func (s *tokenService) GenerateTokenPair(username string, userID int) (string, s
 	return accessToken, refreshToken, nil
 }
 
-func (s *tokenService) generateAccessToken(username string) (string, error) {
+func (s *tokenService) generateAccessToken(id uuid.UUID) (string, error) {
 	payload := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Duration(s.config.Token.AccessTokenExpire) * time.Minute).Unix(),
+		"id":  id,
+		"exp": time.Now().Add(time.Duration(s.config.Token.AccessTokenExpire) * time.Minute).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
 	return token.SignedString([]byte(s.config.Token.AccessTokenSecret))
 }
 
-func (s *tokenService) generateRefreshToken(username string, userID int) (string, error) {
+func (s *tokenService) generateRefreshToken(id uuid.UUID) (string, error) {
 	payload := jwt.MapClaims{
-		"username": username,
-		"exp":      time.Now().Add(time.Duration(s.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
+		"id":  id,
+		"exp": time.Now().Add(time.Duration(s.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -73,7 +74,7 @@ func (s *tokenService) generateRefreshToken(username string, userID int) (string
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 
-	err = s.tokenRepo.SaveRefreshToken(ctx, userID, refreshToken,
+	err = s.tokenRepo.SaveRefreshToken(ctx, id, refreshToken,
 		time.Duration(s.config.Token.RefreshTokenExpire)*time.Minute)
 	if err != nil {
 		return "", err
@@ -82,49 +83,50 @@ func (s *tokenService) generateRefreshToken(username string, userID int) (string
 	return refreshToken, nil
 }
 
-func (s *tokenService) ValidateAccessToken(tokenString string) (string, error) {
+func (s *tokenService) ValidateAccessToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.config.Token.AccessTokenSecret), nil
 	})
 
 	if err != nil {
-		return "", err
+		return uuid.Nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["username"].(string), nil
+
+		return uuid.Parse(claims["id"].(string))
 	}
-	return "", errors.New("invalid token")
+	return uuid.Nil, errors.New("invalid token")
 }
 
-func (s *tokenService) ValidateRefreshToken(tokenString string) (string, error) {
+func (s *tokenService) ValidateRefreshToken(tokenString string) (uuid.UUID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(s.config.Token.RefreshTokenSecret), nil
 	})
 
 	if err != nil {
-		return "", err
+		return uuid.Nil, err
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return claims["username"].(string), nil
+		return uuid.Parse(claims["id"].(string))
 	}
-	return "", errors.New("invalid token")
+	return uuid.Nil, errors.New("invalid token")
 }
 
 func (s *tokenService) RefreshTokens(refreshTokenString string) (string, string, error) {
-	username, err := s.ValidateRefreshToken(refreshTokenString)
+	id, err := s.ValidateRefreshToken(refreshTokenString)
 	if err != nil {
 		return "", "", err
 	}
 
 	ctx := context.Background()
-	isValid, err := s.tokenRepo.ValidateRefreshToken(ctx, username, refreshTokenString)
+	isValid, err := s.tokenRepo.ValidateRefreshToken(ctx, id, refreshTokenString)
 	if err != nil || !isValid {
 		return "", "", errors.New("invalid refresh token")
 	}
 
-	user, err := s.userRepo.GetByUsername(ctx, username)
+	user, err := s.userRepo.Get(ctx, id)
 	if err != nil {
 		return "", "", err
 	}
@@ -134,5 +136,5 @@ func (s *tokenService) RefreshTokens(refreshTokenString string) (string, string,
 		return "", "", err
 	}
 
-	return s.GenerateTokenPair(user.Username, user.ID)
+	return s.GenerateTokenPair(id)
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"github.com/GlebMoskalev/go-todo-api/internal/repository"
+	"github.com/google/uuid"
 	"log/slog"
 )
 
@@ -15,7 +16,8 @@ var (
 
 type UserService interface {
 	Register(ctx context.Context, user entity.UserLogin) (entity.User, error)
-	GetUser(ctx context.Context, username string) (entity.User, error)
+	GetUser(ctx context.Context, id uuid.UUID) (entity.User, error)
+	GetByUsername(ctx context.Context, username string) (entity.User, error)
 }
 
 type userService struct {
@@ -31,6 +33,10 @@ func (s *userService) Register(ctx context.Context, user entity.UserLogin) (enti
 	return s.repo.Create(ctx, user)
 }
 
-func (s *userService) GetUser(ctx context.Context, username string) (entity.User, error) {
+func (s *userService) GetUser(ctx context.Context, id uuid.UUID) (entity.User, error) {
+	return s.repo.Get(ctx, id)
+}
+
+func (s *userService) GetByUsername(ctx context.Context, username string) (entity.User, error) {
 	return s.repo.GetByUsername(ctx, username)
 }

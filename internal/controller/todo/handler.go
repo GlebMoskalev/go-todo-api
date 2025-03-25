@@ -7,6 +7,7 @@ import (
 	todo2 "github.com/GlebMoskalev/go-todo-api/internal/repository"
 	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
+	"github.com/google/uuid"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -29,9 +30,9 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Get")
 	logger.Debug("Attempting to fetching todo")
 
-	username, ok := r.Context().Value("username").(string)
+	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
-		logger.Error("Username not found in contextutils")
+		logger.Error("Id not found in context")
 		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
@@ -44,8 +45,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger = logger.With("todo_id", id, "username", username)
-	todo, err := h.service.Get(r.Context(), username, id)
+	logger = logger.With("todo_id", id)
+	todo, err := h.service.Get(r.Context(), userID, id)
 	if err != nil {
 		if errors.Is(err, todo2.ErrNotFound) {
 			logger.Warn("Todo not found")
@@ -66,9 +67,9 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Delete")
 	logger.Debug("Attempting to delete todo")
 
-	username, ok := r.Context().Value("username").(string)
+	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
-		logger.Error("Username not found in contextutils")
+		logger.Error("Id not found in context")
 		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
@@ -81,8 +82,8 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger = logger.With("todo_id", id, "username", username)
-	err = h.service.Delete(r.Context(), username, id)
+	logger = logger.With("todo_id", id)
+	err = h.service.Delete(r.Context(), userID, id)
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
 		if errors.Is(err, todo2.ErrNotFound) {
@@ -101,13 +102,12 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Create")
 	logger.Debug("Attempting to create todo")
 
-	username, ok := r.Context().Value("username").(string)
+	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
-		logger.Error("Username not found in contextutils")
+		logger.Error("Id not found in context")
 		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
-	logger = logger.With("username", username)
 
 	var todo entity.Todo
 	err := utils.DecodeJSONStruct(r, &todo)
@@ -124,7 +124,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.service.Create(r.Context(), username, todo)
+	id, err := h.service.Create(r.Context(), userID, todo)
 	if err != nil {
 		logger.Error("Failed to create todo")
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
@@ -143,13 +143,12 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Update")
 	logger.Debug("Attempting to update todo")
 
-	username, ok := r.Context().Value("username").(string)
+	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
-		logger.Error("Username not found in contextutils")
+		logger.Error("Id not found in context")
 		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
-	logger = logger.With("username", username)
 
 	var todo entity.Todo
 	err := utils.DecodeJSONStruct(r, &todo)
@@ -166,10 +165,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.Update(r.Context(), username, todo)
+	err = h.service.Update(r.Context(), userID, todo)
 	if err != nil {
 		if errors.Is(err, todo2.ErrNotFound) {
-			logger.Error("Todo not found")
+			logger.Warn("Todo not found")
 			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
@@ -187,13 +186,12 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "GetAll")
 	logger.Debug("Attempting to get todos")
 
-	username, ok := r.Context().Value("username").(string)
+	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
-		logger.Error("Username not found in contextutils")
+		logger.Error("Id not found in context")
 		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
 		return
 	}
-	logger = logger.With("username", username)
 
 	query := r.URL.Query()
 	limit := entity.DefaultLimit
@@ -245,7 +243,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	todos, total, err := h.service.GetAll(r.Context(), username, pagination, filters)
+	todos, total, err := h.service.GetAll(r.Context(), userID, pagination, filters)
 	if err != nil {
 		logger.Error("Failed to fetch todos", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)

@@ -1,5 +1,5 @@
 CREATE TABLE users (
-    ID SERIAL PRIMARY KEY,
+    ID UUID PRIMARY KEY,
     Username VARCHAR(50) UNIQUE NOT NULL,
     PasswordHash TEXT NOT NULL
 );
@@ -11,7 +11,7 @@ CREATE TABLE todos
     Description TEXT,
     Tags VARCHAR(50)[],
     DueTime date,
-    UserId INTEGER REFERENCES users(ID) ON DELETE CASCADE
+    UserId UUID REFERENCES users(ID) ON DELETE CASCADE
 );
 
 CREATE TABLE refresh_tokens
@@ -20,5 +20,5 @@ CREATE TABLE refresh_tokens
     TOKEN TEXT NOT NULL,
     ExpiryDate TIMESTAMP NOT NULL,
     CreatedAt TIMESTAMP DEFAULT now(),
-    UserId INTEGER REFERENCES users(id) ON DELETE CASCADE
+    UserId UUID REFERENCES users(id) ON DELETE CASCADE
 )

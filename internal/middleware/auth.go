@@ -23,13 +23,13 @@ func AuthMiddleware(tokenService service.TokenService) func(http.Handler) http.H
 				return
 			}
 
-			username, err := tokenService.ValidateAccessToken(parts[1])
+			id, err := tokenService.ValidateAccessToken(parts[1])
 			if err != nil {
 				entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid or expired token", nil)
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), "username", username)
+			ctx := context.WithValue(r.Context(), "id", id)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

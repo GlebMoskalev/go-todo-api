@@ -1,9 +1,12 @@
 package entity
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
-	ID           int
+	ID           uuid.UUID
 	Username     string
 	PasswordHash string
 }

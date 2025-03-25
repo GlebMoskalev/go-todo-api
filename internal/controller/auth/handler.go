@@ -63,7 +63,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userService.GetUser(r.Context(), userLogin.Username)
+	user, err := h.userService.GetByUsername(r.Context(), userLogin.Username)
 	if err != nil {
 		if errors.Is(err, service.ErrUserNotFound) {
 			logger.Warn("User not found")
@@ -81,7 +81,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.Username, user.ID)
+	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.ID)
 	if err != nil {
 		logger.Error("Failed to generate tokens", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
