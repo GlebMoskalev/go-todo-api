@@ -9,7 +9,8 @@ import (
 type Config struct {
 	Env    string `yaml:"env"`
 	Server struct {
-		Port string `yaml:"port"`
+		Address string `yaml:"address"`
+		Timeout int    `yaml:"timeout"`
 	} `yaml:"server"`
 	Database struct {
 		Host     string `yaml:"host"`

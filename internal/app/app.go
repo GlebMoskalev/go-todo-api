@@ -14,6 +14,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 )
 
 const version = "v2"
@@ -48,7 +49,13 @@ func Run(configPath string) error {
 	}(db)
 
 	router := setupRouter(logger, db, cfg)
-	return http.ListenAndServe(":"+cfg.Server.Port, router)
+	server := &http.Server{
+		Addr:         cfg.Server.Address,
+		Handler:      router,
+		ReadTimeout:  time.Duration(cfg.Server.Timeout) * time.Second,
+		WriteTimeout: time.Duration(cfg.Server.Timeout) * time.Second,
+	}
+	return server.ListenAndServe()
 }
 
 func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
@@ -81,7 +88,7 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 		})
 	})
 
-	logger.Info("Starting server", "port", cfg.Database.Port)
+	logger.Info("Starting server", "address", cfg.Server.Address)
 	return r
 }
 
