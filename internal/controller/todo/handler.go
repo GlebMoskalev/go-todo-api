@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	todo2 "github.com/GlebMoskalev/go-todo-api/internal/repository"
+	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
@@ -16,12 +17,12 @@ import (
 )
 
 type Handler struct {
-	repo   todo2.TodoRepository
-	logger *slog.Logger
+	service service.TodoService
+	logger  *slog.Logger
 }
 
-func NewHandler(repo todo2.TodoRepository, logger *slog.Logger) *Handler {
-	return &Handler{repo: repo, logger: logger}
+func NewHandler(service service.TodoService, logger *slog.Logger) *Handler {
+	return &Handler{service: service, logger: logger}
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
@@ -44,7 +45,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger = logger.With("todo_id", id, "username", username)
-	todo, err := h.repo.Get(r.Context(), username, id)
+	todo, err := h.service.Get(r.Context(), username, id)
 	if err != nil {
 		if errors.Is(err, todo2.ErrNotFound) {
 			logger.Warn("Todo not found")
@@ -81,7 +82,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger = logger.With("todo_id", id, "username", username)
-	err = h.repo.Delete(r.Context(), username, id)
+	err = h.service.Delete(r.Context(), username, id)
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
 		if errors.Is(err, todo2.ErrNotFound) {
@@ -123,7 +124,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.repo.Create(r.Context(), username, todo)
+	id, err := h.service.Create(r.Context(), username, todo)
 	if err != nil {
 		logger.Error("Failed to create todo")
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
@@ -165,7 +166,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.repo.Update(r.Context(), username, todo)
+	err = h.service.Update(r.Context(), username, todo)
 	if err != nil {
 		if errors.Is(err, todo2.ErrNotFound) {
 			logger.Error("Todo not found")
@@ -244,7 +245,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	todos, total, err := h.repo.GetAll(r.Context(), username, pagination, filters)
+	todos, total, err := h.service.GetAll(r.Context(), username, pagination, filters)
 	if err != nil {
 		logger.Error("Failed to fetch todos", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)

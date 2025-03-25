@@ -16,7 +16,7 @@ import (
 	"os"
 )
 
-const version = "v1"
+const version = "v2"
 
 const (
 	envLocal = "local"
@@ -58,8 +58,9 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 
 	userService := service.NewUserService(userRepo, logger)
 	tokenService := service.NewTokenService(userRepo, tokenRepo, cfg, logger)
+	todoService := service.NewTodoService(todoRepo)
 
-	todoHandler := todo2.NewHandler(todoRepo, logger)
+	todoHandler := todo2.NewHandler(todoService, logger)
 	authHandler := auth2.NewHandler(userService, tokenService, logger)
 
 	r := chi.NewRouter()

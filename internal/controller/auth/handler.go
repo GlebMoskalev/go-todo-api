@@ -3,7 +3,7 @@ package auth
 import (
 	"errors"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	service "github.com/GlebMoskalev/go-todo-api/internal/service"
+	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
@@ -34,7 +34,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	createdUser, err := h.userService.Register(r.Context(), userLogin) // Используем UserService
+	createdUser, err := h.userService.Register(r.Context(), userLogin)
 	if err != nil {
 		if errors.Is(err, service.ErrUsernameExists) {
 			logger.Warn("Username already exists")
@@ -63,9 +63,9 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userService.GetUser(r.Context(), userLogin.Username) // Используем UserService
+	user, err := h.userService.GetUser(r.Context(), userLogin.Username)
 	if err != nil {
-		if errors.Is(err, service.ErrUserNotFound) { // Обновляем ссылку на ошибку из repository на service
+		if errors.Is(err, service.ErrUserNotFound) {
 			logger.Warn("User not found")
 			entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
 			return
@@ -81,7 +81,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.Username, user.ID) // Передаем user.ID
+	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.Username, user.ID)
 	if err != nil {
 		logger.Error("Failed to generate tokens", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
