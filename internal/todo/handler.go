@@ -28,6 +28,13 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Get")
 	logger.Debug("Attempting to fetching todo")
 
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		logger.Error("Username not found in context")
+		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -36,8 +43,8 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger = logger.With("todo_id", id)
-	todo, err := h.repo.Get(r.Context(), id)
+	logger = logger.With("todo_id", id, "username", username)
+	todo, err := h.repo.Get(r.Context(), username, id)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			logger.Warn("Todo not found")
@@ -58,6 +65,13 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Delete")
 	logger.Debug("Attempting to delete todo")
 
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		logger.Error("Username not found in context")
+		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -66,8 +80,8 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger = logger.With("todo_id", id)
-	err = h.repo.Delete(r.Context(), id)
+	logger = logger.With("todo_id", id, "username", username)
+	err = h.repo.Delete(r.Context(), username, id)
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
 		if errors.Is(err, ErrNotFound) {
@@ -86,6 +100,14 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Create")
 	logger.Debug("Attempting to create todo")
 
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		logger.Error("Username not found in context")
+		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+	logger = logger.With("username", username)
+
 	var todo entity.Todo
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
@@ -101,7 +123,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.repo.Create(r.Context(), todo)
+	id, err := h.repo.Create(r.Context(), username, todo)
 	if err != nil {
 		logger.Error("Failed to create todo")
 		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
@@ -120,6 +142,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Update")
 	logger.Debug("Attempting to update todo")
 
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		logger.Error("Username not found in context")
+		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+	logger = logger.With("username", username)
+
 	var todo entity.Todo
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
@@ -135,7 +165,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.repo.Update(r.Context(), todo)
+	err = h.repo.Update(r.Context(), username, todo)
 	if err != nil {
 		if errors.Is(err, ErrNotFound) {
 			logger.Error("Todo not found")
@@ -155,6 +185,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "GetAll")
 	logger.Debug("Attempting to get todos")
+
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		logger.Error("Username not found in context")
+		response.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		return
+	}
+	logger = logger.With("username", username)
 
 	query := r.URL.Query()
 	limit := entity.DefaultLimit
@@ -206,7 +244,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	todos, total, err := h.repo.GetAll(r.Context(), pagination, filters)
+	todos, total, err := h.repo.GetAll(r.Context(), username, pagination, filters)
 	if err != nil {
 		logger.Error("Failed to fetch todos", "error", err)
 		response.SendResponse[any](w, http.StatusInternalServerError, response.ServerFailureMessage, nil)
