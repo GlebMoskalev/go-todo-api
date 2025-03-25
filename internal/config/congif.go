@@ -15,6 +15,12 @@ type Config struct {
 		User     string `yaml:"user"`
 		Password string `yaml:"password"`
 	} `yaml:"database"`
+	Token struct {
+		AccessTokenSecret  string `yaml:"accessTokenSecret"`
+		RefreshTokenSecret string `yaml:"refreshTokenSecret"`
+		AccessTokenExpire  int    `yaml:"accessTokenExpire"`
+		RefreshTokenExpire int    `yaml:"refreshTokenExpire"`
+	} `yaml:"token"`
 }
 
 func Load(file string) (Config, error) {

@@ -5,3 +5,9 @@ database:
   name: "todoapi"
   user: "postgres"
   password: "postgres"
+
+token:
+  accessTokenSecret: "secret_access"
+  refreshTokenSecret: "secret_refresh"
+  accessTokenExpire: 15 # 15 minute
+  refreshTokenExpire: 10080 # 10080 minute = 7 days

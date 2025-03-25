@@ -1,8 +1,24 @@
+CREATE TABLE users (
+    ID SERIAL PRIMARY KEY,
+    Username VARCHAR(50) UNIQUE NOT NULL,
+    PasswordHash TEXT NOT NULL
+);
+
 CREATE TABLE todos
 (
     ID SERIAL PRIMARY KEY,
     Title VARCHAR(50) NOT NULL,
     Description TEXT,
     Tags VARCHAR(50)[],
-    DueTime date
+    DueTime date,
+    UserId INTEGER REFERENCES users(ID) ON DELETE CASCADE
+);
+
+CREATE TABLE refresh_tokens
+(
+    ID SERIAL PRIMARY KEY,
+    TOKEN TEXT NOT NULL,
+    ExpiryDate TIMESTAMP NOT NULL,
+    CreatedAt TIMESTAMP DEFAULT now(),
+    UserId INTEGER REFERENCES users(id) ON DELETE CASCADE
 )

@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"flag"
+	"github.com/GlebMoskalev/go-todo-api/internal/auth"
 	"log/slog"
 	"net/http"
 	"os"
@@ -53,6 +54,9 @@ func main() {
 func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 	todoRepo := todo.NewRepository(db, logger)
 	todoHandler := todo.NewHandler(todoRepo, logger)
+	authRepo := auth.NewRepository(db, logger)
+	tokenService := auth.NewTokenService(db, cfg, logger)
+	authHandler := auth.NewHandler(authRepo, tokenService, logger)
 
 	r := chi.NewRouter()
 
@@ -60,8 +64,15 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 	r.Use(middleware.RequestIdHeader)
 
 	r.Route("/"+version, func(r chi.Router) {
+		r.Route("/auth", func(r chi.Router) {
+			auth.RegisterRoutes(r, authHandler)
+		})
+
 		r.Route("/todos", func(r chi.Router) {
-			todo.RegisterRoutes(r, todoHandler)
+			r.Group(func(r chi.Router) {
+				r.Use(tokenService.AuthMiddleware)
+				todo.RegisterRoutes(r, todoHandler)
+			})
 		})
 	})
 
