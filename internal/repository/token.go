@@ -41,8 +41,15 @@ func (r *tokenRepository) SaveRefreshToken(ctx context.Context, userID uuid.UUID
 
 func (r *tokenRepository) ValidateRefreshToken(ctx context.Context, userID uuid.UUID, token string) (bool, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "token_repository", "ValidateRefreshToken")
+
+	_, err := r.db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE userid = $1 AND expirydate < NOW()", userID)
+	if err != nil {
+		logger.Error("Failed to delete expired refresh tokens", "error", err)
+		return false, err
+	}
+
 	var count int
-	err := r.db.QueryRowContext(ctx,
+	err = r.db.QueryRowContext(ctx,
 		"SELECT COUNT(*) FROM refresh_tokens rt JOIN users u ON rt.userid = u.id WHERE u.id = $1 AND rt.token = $2",
 		userID, token,
 	).Scan(&count)
