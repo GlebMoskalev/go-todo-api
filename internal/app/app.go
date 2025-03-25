@@ -52,11 +52,15 @@ func Run(configPath string) error {
 }
 
 func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
+	userRepo := repository.NewUserRepository(db, logger)
+	tokenRepo := repository.NewTokenRepository(db, logger)
 	todoRepo := repository.NewTodoRepository(db, logger)
+
+	userService := service.NewUserService(userRepo, logger)
+	tokenService := service.NewTokenService(userRepo, tokenRepo, cfg, logger)
+
 	todoHandler := todo2.NewHandler(todoRepo, logger)
-	authRepo := repository.NewRepository(db, logger)
-	tokenService := service.NewTokenService(db, cfg, logger)
-	authHandler := auth2.NewHandler(authRepo, tokenService, logger)
+	authHandler := auth2.NewHandler(userService, tokenService, logger)
 
 	r := chi.NewRouter()
 

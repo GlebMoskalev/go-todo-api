@@ -3,8 +3,9 @@ package entity
 import "golang.org/x/crypto/bcrypt"
 
 type User struct {
-	Username     string `json:"username"`
-	PasswordHash string `json:"-"`
+	ID           int
+	Username     string
+	PasswordHash string
 }
 
 type UserLogin struct {

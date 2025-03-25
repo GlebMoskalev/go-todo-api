@@ -3,23 +3,22 @@ package auth
 import (
 	"errors"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	"github.com/GlebMoskalev/go-todo-api/internal/repository"
-	auth2 "github.com/GlebMoskalev/go-todo-api/internal/service"
+	service "github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
 )
 
 type Handler struct {
-	repo         repository.AuthRepository
-	tokenService *auth2.AuthService
+	userService  service.UserService
+	tokenService service.TokenService
 	logger       *slog.Logger
 }
 
-func NewHandler(repo repository.AuthRepository, service *auth2.AuthService, logger *slog.Logger) *Handler {
+func NewHandler(userService service.UserService, tokenService service.TokenService, logger *slog.Logger) *Handler {
 	return &Handler{
-		repo:         repo,
-		tokenService: service,
+		userService:  userService,
+		tokenService: tokenService,
 		logger:       logger,
 	}
 }
@@ -29,27 +28,27 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Attempting to register user")
 
 	var userLogin entity.UserLogin
-	err := utils.DecodeJSONStruct(r, &userLogin)
-	if err != nil {
-		logger.Warn("Failed to decode json", "error", err)
+	if err := utils.DecodeJSONStruct(r, &userLogin); err != nil {
+		logger.Warn("Failed to decode JSON", "error", err)
 		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
-	err = h.repo.Create(r.Context(), userLogin)
+	createdUser, err := h.userService.Register(r.Context(), userLogin) // Используем UserService
 	if err != nil {
-		if errors.Is(err, repository.ErrUsernameExists) {
+		if errors.Is(err, service.ErrUsernameExists) {
 			logger.Warn("Username already exists")
 			entity.SendResponse[any](w, http.StatusConflict, "Username already exists", nil)
 			return
 		}
-
 		logger.Error("Failed to create user", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse[any](w, http.StatusOK, "User successfully created", nil)
+	entity.SendResponse(w, http.StatusOK, "User successfully created", map[string]string{
+		"username": createdUser.Username,
+	})
 	logger.Info("Successfully registered user")
 }
 
@@ -58,21 +57,19 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("Attempting to login user")
 
 	var userLogin entity.UserLogin
-	err := utils.DecodeJSONStruct(r, &userLogin)
-	if err != nil {
-		logger.Warn("Failed to decode json", "error", err)
+	if err := utils.DecodeJSONStruct(r, &userLogin); err != nil {
+		logger.Warn("Failed to decode JSON", "error", err)
 		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
 
-	user, err := h.repo.GetByUsername(r.Context(), userLogin.Username)
+	user, err := h.userService.GetUser(r.Context(), userLogin.Username) // Используем UserService
 	if err != nil {
-		if errors.Is(err, repository.ErrUserNotFound) {
+		if errors.Is(err, service.ErrUserNotFound) { // Обновляем ссылку на ошибку из repository на service
 			logger.Warn("User not found")
 			entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
 			return
 		}
-
 		logger.Error("Failed to get user", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
 		return
@@ -83,7 +80,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
 		return
 	}
-	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.Username)
+
+	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.Username, user.ID) // Передаем user.ID
 	if err != nil {
 		logger.Error("Failed to generate tokens", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
@@ -93,10 +91,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	entity.SendResponse(w, http.StatusOK, "Login successful", struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
-	}{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	})
+	}{AccessToken: accessToken, RefreshToken: refreshToken})
 	logger.Info("Successfully logged in user")
 }
 
@@ -107,9 +102,8 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var refreshRequest struct {
 		RefreshToken string `json:"refresh_token"`
 	}
-	err := utils.DecodeJSONStruct(r, &refreshRequest)
-	if err != nil {
-		logger.Warn("Failed to decode json", "error", err)
+	if err := utils.DecodeJSONStruct(r, &refreshRequest); err != nil {
+		logger.Warn("Failed to decode JSON", "error", err)
 		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
 		return
 	}
@@ -120,6 +114,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid refresh token", nil)
 		return
 	}
+
 	entity.SendResponse(w, http.StatusOK, "Tokens refreshed", map[string]string{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,

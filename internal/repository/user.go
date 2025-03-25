@@ -15,27 +15,28 @@ var (
 	ErrUsernameExists = errors.New("username already exists")
 )
 
-type AuthRepository interface {
-	Create(ctx context.Context, user entity.UserLogin) error
+type UserRepository interface {
+	Create(ctx context.Context, user entity.UserLogin) (entity.User, error)
 	GetByUsername(ctx context.Context, username string) (entity.User, error)
 }
 
-type authRepository struct {
+type userRepository struct {
 	db     *sql.DB
 	logger *slog.Logger
 }
 
-func NewRepository(db *sql.DB, logger *slog.Logger) AuthRepository {
-	return &authRepository{db: db, logger: logger}
+func NewUserRepository(db *sql.DB, logger *slog.Logger) UserRepository {
+	return &userRepository{db: db, logger: logger}
 }
 
-func (r *authRepository) Create(ctx context.Context, user entity.UserLogin) error {
-	logger := utils.SetupLogger(ctx, r.logger, "auth_repository", "Create", "username", user.Username)
+func (r *userRepository) Create(ctx context.Context, user entity.UserLogin) (entity.User, error) {
+	logger := utils.SetupLogger(ctx, r.logger, "user_repository", "Create", "username", user.Username)
 	logger.Debug("Attempting to create user")
 
 	passwordHash, err := entity.HashPassword(user.Password)
 	if err != nil {
 		logger.Error("Failed to hash password", "error", err)
+		return entity.User{}, err
 	}
 
 	_, err = r.db.ExecContext(ctx, "INSERT INTO users(username, passwordhash) VALUES($1, $2)",
@@ -46,16 +47,19 @@ func (r *authRepository) Create(ctx context.Context, user entity.UserLogin) erro
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			logger.Warn("Username already exists")
-			return ErrUsernameExists
+			return entity.User{}, ErrUsernameExists
 		}
 		logger.Error("Failed to insert user into database", "error", err)
 	}
 	logger.Info("Successfully created user")
-	return nil
+	return entity.User{
+		Username:     user.Username,
+		PasswordHash: passwordHash,
+	}, nil
 }
 
-func (r *authRepository) GetByUsername(ctx context.Context, username string) (entity.User, error) {
-	logger := utils.SetupLogger(ctx, r.logger, "auth_repository", "Create", "username", username)
+func (r *userRepository) GetByUsername(ctx context.Context, username string) (entity.User, error) {
+	logger := utils.SetupLogger(ctx, r.logger, "user_repository", "Create", "username", username)
 	logger.Debug("Attempting to fetch user")
 
 	user := entity.User{

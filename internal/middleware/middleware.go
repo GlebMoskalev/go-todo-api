@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Handler {
+func AuthMiddleware(tokenService service.TokenService) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -23,7 +23,7 @@ func AuthMiddleware(authService *service.AuthService) func(http.Handler) http.Ha
 				return
 			}
 
-			username, err := authService.ValidateAccessToken(parts[1])
+			username, err := tokenService.ValidateAccessToken(parts[1])
 			if err != nil {
 				entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid or expired token", nil)
 				return
