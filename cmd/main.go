@@ -1,5 +1,11 @@
 package main
 
+// @title Todo API
+// @version 2.0
+// @description This is a simple Todo API with authentication.
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 import (
 	"flag"
 	"github.com/GlebMoskalev/go-todo-api/internal/app"

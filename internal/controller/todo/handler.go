@@ -21,10 +21,30 @@ type Handler struct {
 	logger  *slog.Logger
 }
 
+type emptyResponse struct{}
+
+type createResponse struct {
+	Id int `json:"id" example:"12"`
+}
+
 func NewHandler(service service.TodoService, logger *slog.Logger) *Handler {
 	return &Handler{service: service, logger: logger}
 }
 
+// Get retrieves a todo by ID
+// @Summary Get
+// @Description Retrieves a todo by its ID for the authenticated user.
+// @Tags todo
+// @Accept json
+// @Produce json
+// @Param id path int true "Todo ID"
+// @Security BearerAuth
+// @Success 200 {object} entity.Response[entity.Todo] "Successfully create"
+// @Failure 400 {object} entity.Response[string] "Invalid ID"
+// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
+// @Failure 404 {object} entity.Response[string] "Todo not found"
+// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Router /todos/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Get")
 	logger.Debug("Attempting to fetching todo")
@@ -40,7 +60,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid ID", nil)
 		return
 	}
 
@@ -58,10 +78,24 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Ok", todo)
+	entity.SendResponse(w, http.StatusOK, "Successfully create", todo)
 	logger.Info("Successfully fetched todo")
 }
 
+// Delete removes a todo by ID
+// @Summary Delete a todo
+// @Description Deletes a todo by its ID for the authenticated user.
+// @Tags todo
+// @Accept json
+// @Produce json
+// @Param id path int true "Todo ID"
+// @Security BearerAuth
+// @Success 200 {object} entity.Response[emptyResponse] "Successfully delete"
+// @Failure 400 {object} entity.Response[string] "Invalid ID"
+// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
+// @Failure 404 {object} entity.Response[string] "Todo not found"
+// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Router /todos/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Delete")
 	logger.Debug("Attempting to delete todo")
@@ -77,7 +111,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid id", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid ID", nil)
 		return
 	}
 
@@ -97,6 +131,19 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Successfully delete todo")
 }
 
+// Create adds a new todo
+// @Summary Create a todo
+// @Description Creates a new todo for the authenticated user.
+// @Tags todo
+// @Accept json
+// @Produce json
+// @Param todo body entity.Todo true "Todo data"
+// @Security BearerAuth
+// @Success 200 {object} entity.Response[createResponse] "Todo successfully created"
+// @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
+// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
+// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Router /todos [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Create")
 	logger.Debug("Attempting to create todo")
@@ -130,14 +177,24 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Successfully create", struct {
-		Id int `json:"id"`
-	}{
-		Id: id,
-	})
+	entity.SendResponse(w, http.StatusOK, "Successfully create", createResponse{Id: id})
 	logger.Info("Successfully create todo")
 }
 
+// Update modifies an existing todo
+// @Summary Update a todo
+// @Description Updates an existing todo for the authenticated user.
+// @Tags todo
+// @Accept json
+// @Produce json
+// @Param todo body entity.Todo true "Updated todo data"
+// @Security BearerAuth
+// @Success 200 {object} entity.Response[emptyResponse] "Todo successfully updated"
+// @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
+// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
+// @Failure 404 {object} entity.Response[string] "Todo not found"
+// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Router /todos [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Update")
 	logger.Debug("Attempting to update todo")
@@ -181,6 +238,22 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger.Info("Successfully update todo")
 }
 
+// GetAll retrieves all todos with pagination and filters
+// @Summary Get all todos
+// @Description Retrieves a paginated list of todos for the authenticated user with optional filters.
+// @Tags todo
+// @Accept json
+// @Produce json
+// @Param limit query int false "Number of items per page" default(20)
+// @Param offset query int false "Offset for pagination" default(0)
+// @Param due_date query string false "Filter by due date (YYYY-MM-DD)"
+// @Param tags query string false "Filter by tags (comma-separated)"
+// @Security BearerAuth
+// @Success 200 {object} entity.ListResponse[entity.Todo] "Todos successfully retrieved"
+// @Failure 400 {object} entity.Response[string] "Invalid query parameters"
+// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
+// @Failure 500 {object} entity.Response[string] "Something went wrong, please try again later"
+// @Router /todos [get]
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "GetAll")
 	logger.Debug("Attempting to get todos")

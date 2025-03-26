@@ -2,6 +2,7 @@ package app
 
 import (
 	"database/sql"
+	_ "github.com/GlebMoskalev/go-todo-api/docs"
 	"github.com/GlebMoskalev/go-todo-api/internal/config"
 	auth2 "github.com/GlebMoskalev/go-todo-api/internal/controller/auth"
 	todo2 "github.com/GlebMoskalev/go-todo-api/internal/controller/todo"
@@ -11,6 +12,7 @@ import (
 	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/go-chi/chi/v5"
 	chiMiddleware "github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"log/slog"
 	"net/http"
 	"os"
@@ -74,6 +76,10 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 
 	r.Use(chiMiddleware.RequestID)
 	r.Use(middleware.RequestIdHeader)
+
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://"+cfg.Server.Address+"/swagger/doc.json"),
+	))
 
 	r.Route("/"+version, func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
