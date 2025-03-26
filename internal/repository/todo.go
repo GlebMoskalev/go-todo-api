@@ -14,21 +14,12 @@ import (
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 )
 
-var (
-	ErrNotFound = errors.New("todo not found")
-)
-
-type Filters struct {
-	DueTime *entity.Date
-	Tags    []string
-}
-
 type TodoRepository interface {
 	Get(ctx context.Context, userID uuid.UUID, id int) (entity.Todo, error)
 	Create(ctx context.Context, userID uuid.UUID, todo entity.Todo) (int, error)
 	Update(ctx context.Context, userID uuid.UUID, todo entity.Todo) error
 	Delete(ctx context.Context, userID uuid.UUID, id int) error
-	GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error)
+	GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters entity.Filters) ([]entity.Todo, int, error)
 }
 
 type todoRepository struct {
@@ -53,7 +44,7 @@ func (r *todoRepository) Get(ctx context.Context, userID uuid.UUID, id int) (ent
 	if err := row.Scan(&todo.ID, &todo.Title, pq.Array(&todo.Tags), &todo.Description, &todo.DueDate); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Warn("Todo not found")
-			return entity.Todo{}, ErrNotFound
+			return entity.Todo{}, entity.ErrTodoNotFound
 		}
 		logger.Error("Failed to scan todo row", "error", err)
 		return entity.Todo{}, err
@@ -82,7 +73,7 @@ func (r *todoRepository) Delete(ctx context.Context, userID uuid.UUID, id int) e
 
 	if rowsAffected == 0 {
 		logger.Warn("No todo found to delete")
-		return ErrNotFound
+		return entity.ErrTodoNotFound
 	}
 
 	logger.Info("Successfully deleted todo")
@@ -136,14 +127,14 @@ func (r *todoRepository) Update(ctx context.Context, userID uuid.UUID, todo enti
 	}
 	if rowsAffected == 0 {
 		logger.Warn("No todo found to update")
-		return ErrNotFound
+		return entity.ErrTodoNotFound
 	}
 
 	logger.Info("Successfully updated todo")
 	return nil
 }
 
-func (r *todoRepository) GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters Filters) ([]entity.Todo, int, error) {
+func (r *todoRepository) GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters entity.Filters) ([]entity.Todo, int, error) {
 	logger := utils.SetupLogger(ctx, r.logger, "todo_repository", "GetAll")
 	if filters.DueTime != nil {
 		logger = logger.With("due_time", *filters.DueTime)

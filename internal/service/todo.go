@@ -12,7 +12,7 @@ type TodoService interface {
 	Create(ctx context.Context, userID uuid.UUID, todo entity.Todo) (int, error)
 	Update(ctx context.Context, userID uuid.UUID, todo entity.Todo) error
 	Delete(ctx context.Context, userID uuid.UUID, id int) error
-	GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters repository.Filters) ([]entity.Todo, int, error)
+	GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters entity.Filters) ([]entity.Todo, int, error)
 }
 
 type todoService struct {
@@ -39,7 +39,7 @@ func (s *todoService) Delete(ctx context.Context, userID uuid.UUID, id int) erro
 	return s.repo.Delete(ctx, userID, id)
 }
 
-func (s *todoService) GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters repository.Filters) ([]entity.Todo, int, error) {
+func (s *todoService) GetAll(ctx context.Context, userID uuid.UUID, pagination entity.Pagination, filters entity.Filters) ([]entity.Todo, int, error) {
 	if pagination.Limit > 100 {
 		pagination.Limit = 100
 	}

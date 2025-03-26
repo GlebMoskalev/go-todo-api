@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
-	todo2 "github.com/GlebMoskalev/go-todo-api/internal/repository"
 	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"github.com/google/uuid"
@@ -48,7 +47,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger = logger.With("todo_id", id)
 	todo, err := h.service.Get(r.Context(), userID, id)
 	if err != nil {
-		if errors.Is(err, todo2.ErrNotFound) {
+		if errors.Is(err, entity.ErrTodoNotFound) {
 			logger.Warn("Todo not found")
 			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
@@ -86,7 +85,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	err = h.service.Delete(r.Context(), userID, id)
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
-		if errors.Is(err, todo2.ErrNotFound) {
+		if errors.Is(err, entity.ErrTodoNotFound) {
 			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
 		}
@@ -167,7 +166,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Update(r.Context(), userID, todo)
 	if err != nil {
-		if errors.Is(err, todo2.ErrNotFound) {
+		if errors.Is(err, entity.ErrTodoNotFound) {
 			logger.Warn("Todo not found")
 			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
 			return
@@ -217,7 +216,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 	pagination := entity.Pagination{Offset: offset, Limit: limit}
 
-	var filters todo2.Filters
+	var filters entity.Filters
 	if dueDateStr := query.Get("due_date"); dueDateStr != "" {
 		dueDate, err := time.Parse(time.DateOnly, dueDateStr)
 		if err != nil {

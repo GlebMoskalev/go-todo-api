@@ -2,16 +2,10 @@ package service
 
 import (
 	"context"
-	"errors"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"github.com/GlebMoskalev/go-todo-api/internal/repository"
 	"github.com/google/uuid"
 	"log/slog"
-)
-
-var (
-	ErrUserNotFound   = errors.New("user not found")
-	ErrUsernameExists = errors.New("username already exists")
 )
 
 type UserService interface {

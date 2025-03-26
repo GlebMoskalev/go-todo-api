@@ -2,11 +2,13 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"github.com/GlebMoskalev/go-todo-api/internal/service"
 	"github.com/GlebMoskalev/go-todo-api/internal/utils"
 	"log/slog"
 	"net/http"
+	"strings"
 )
 
 type Handler struct {
@@ -34,9 +36,16 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if validationErrors := userLogin.Validate(); validationErrors != nil {
+		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
+		logger.Warn(msg)
+		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		return
+	}
+
 	createdUser, err := h.userService.Register(r.Context(), userLogin)
 	if err != nil {
-		if errors.Is(err, service.ErrUsernameExists) {
+		if errors.Is(err, entity.ErrUsernameExists) {
 			logger.Warn("Username already exists")
 			entity.SendResponse[any](w, http.StatusConflict, "Username already exists", nil)
 			return
@@ -65,7 +74,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userService.GetByUsername(r.Context(), userLogin.Username)
 	if err != nil {
-		if errors.Is(err, service.ErrUserNotFound) {
+		if errors.Is(err, entity.ErrUserNotFound) {
 			logger.Warn("User not found")
 			entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
 			return

@@ -11,11 +11,6 @@ import (
 	"log/slog"
 )
 
-var (
-	ErrUserNotFound   = errors.New("user not found")
-	ErrUsernameExists = errors.New("username already exists")
-)
-
 type UserRepository interface {
 	Create(ctx context.Context, user entity.UserLogin) (entity.User, error)
 	Get(ctx context.Context, id uuid.UUID) (entity.User, error)
@@ -51,7 +46,7 @@ func (r *userRepository) Create(ctx context.Context, user entity.UserLogin) (ent
 		var pqErr *pq.Error
 		if errors.As(err, &pqErr) && pqErr.Code == "23505" {
 			logger.Warn("Username already exists")
-			return entity.User{}, ErrUsernameExists
+			return entity.User{}, entity.ErrUsernameExists
 		}
 		logger.Error("Failed to insert user into database", "error", err)
 		return entity.User{}, err
@@ -77,7 +72,7 @@ func (r *userRepository) Get(ctx context.Context, id uuid.UUID) (entity.User, er
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Warn("User not found")
-			return entity.User{}, ErrUserNotFound
+			return entity.User{}, entity.ErrUserNotFound
 		}
 		logger.Error("Failed to scan user row", "error", err)
 		return entity.User{}, err
@@ -101,7 +96,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (en
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Warn("User not found")
-			return entity.User{}, ErrUserNotFound
+			return entity.User{}, entity.ErrUserNotFound
 		}
 		logger.Error("Failed to scan user row", "error", err)
 		return entity.User{}, err

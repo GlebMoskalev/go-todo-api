@@ -16,6 +16,11 @@ type Todo struct {
 	DueDate     *Date    `json:"due_date" validate:"required"`
 }
 
+type Filters struct {
+	DueTime *Date
+	Tags    []string
+}
+
 func (t *Todo) Validate() []string {
 	validate := validator.New()
 	validate.RegisterTagNameFunc(func(fld reflect.StructField) string {
