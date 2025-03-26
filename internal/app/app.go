@@ -81,7 +81,7 @@ func setupRouter(logger *slog.Logger, db *sql.DB, cfg config.Config) *chi.Mux {
 		httpSwagger.URL("http://"+cfg.Server.Address+"/swagger/doc.json"),
 	))
 
-	r.Route("/"+version, func(r chi.Router) {
+	r.Route("/api/"+version, func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {
 			auth2.RegisterRoutes(r, authHandler)
 		})

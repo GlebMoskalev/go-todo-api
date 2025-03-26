@@ -3,6 +3,7 @@ package main
 // @title Todo API
 // @version 2.0
 // @description This is a simple Todo API with authentication.
+// @BasePath /api/v2
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization

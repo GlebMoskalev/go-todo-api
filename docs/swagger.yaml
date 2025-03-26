@@ -1,3 +1,4 @@
+basePath: /api/v2
 definitions:
   auth.refreshRequest:
     properties:
@@ -146,7 +147,7 @@ info:
   title: Todo API
   version: "2.0"
 paths:
-  /login:
+  /auth/login:
     post:
       consumes:
       - application/json
@@ -180,7 +181,7 @@ paths:
       summary: User login
       tags:
       - auth
-  /refresh:
+  /auth/refresh:
     post:
       consumes:
       - application/json
@@ -214,13 +215,11 @@ paths:
       summary: Refresh access and refresh tokens
       tags:
       - auth
-  /register:
+  /auth/register:
     post:
       consumes:
       - application/json
-      description: 'Creates a new user with the provided username and password. Example
-        response: {"code": 200, "message": "User successfully created", "data": {"username":
-        "john_doe"}}'
+      description: Creates a new user with the provided username and password.
       parameters:
       - description: User registration data
         in: body

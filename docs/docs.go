@@ -15,7 +15,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/login": {
+        "/auth/login": {
             "post": {
                 "description": "Authenticates a user and returns access and refresh tokens.",
                 "consumes": [
@@ -67,7 +67,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/refresh": {
+        "/auth/refresh": {
             "post": {
                 "description": "Refreshes tokens using a valid refresh token.",
                 "consumes": [
@@ -119,9 +119,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/register": {
+        "/auth/register": {
             "post": {
-                "description": "Creates a new user with the provided username and password. Example response: {\"code\": 200, \"message\": \"User successfully created\", \"data\": {\"username\": \"john_doe\"}}",
+                "description": "Creates a new user with the provided username and password.",
                 "consumes": [
                     "application/json"
                 ],
@@ -708,7 +708,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "2.0",
 	Host:             "",
-	BasePath:         "",
+	BasePath:         "/api/v2",
 	Schemes:          []string{},
 	Title:            "Todo API",
 	Description:      "This is a simple Todo API with authentication.",

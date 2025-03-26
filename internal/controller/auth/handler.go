@@ -45,7 +45,7 @@ func NewHandler(userService service.UserService, tokenService service.TokenServi
 // @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
 // @Failure 409 {object} entity.Response[string] "Username already exists"
 // @Failure 500 {object} entity.Response[string] "Internal server error"
-// @Router /register [post]
+// @Router /auth/register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Register")
 	logger.Debug("Attempting to register user")
@@ -93,7 +93,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} entity.Response[string] "Invalid request data"
 // @Failure 401 {object} entity.Response[string] "Invalid credentials"
 // @Failure 500 {object} entity.Response[string] "Internal server error"
-// @Router /login [post]
+// @Router /auth/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Login")
 	logger.Debug("Attempting to login user")
@@ -148,7 +148,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} entity.Response[string] "Invalid request data"
 // @Failure 401 {object} entity.Response[string] "Invalid refresh token"
 // @Failure 500 {object} entity.Response[string] "Internal server error"
-// @Router /refresh [post]
+// @Router /auth/refresh [post]
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Refresh")
 	logger.Debug("Attempting to refresh tokens")
