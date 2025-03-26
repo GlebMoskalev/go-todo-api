@@ -35,7 +35,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.UserLogin"
+                            "$ref": "#/definitions/swagger.UserRequest"
                         }
                     }
                 ],
@@ -43,25 +43,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-auth_tokenResponse"
+                            "$ref": "#/definitions/swagger.TokenResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request data",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid credentials",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.refreshRequest"
+                            "$ref": "#/definitions/swagger.RefreshRequest"
                         }
                     }
                 ],
@@ -95,25 +95,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Tokens refreshed",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-auth_tokenResponse"
+                            "$ref": "#/definitions/swagger.TokenResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request data",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Invalid refresh token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -139,7 +139,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.UserLogin"
+                            "$ref": "#/definitions/swagger.UserRequest"
                         }
                     }
                 ],
@@ -147,25 +147,25 @@ const docTemplate = `{
                     "200": {
                         "description": "User successfully created",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-map_string_string"
+                            "$ref": "#/definitions/swagger.SuccessRegisterResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request data or validation error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "409": {
                         "description": "Username already exists",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ConflictResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -483,28 +483,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.refreshRequest": {
-            "type": "object",
-            "properties": {
-                "refresh_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"
-                }
-            }
-        },
-        "auth.tokenResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"
-                },
-                "refresh_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"
-                }
-            }
-        },
         "entity.Date": {
             "type": "object",
             "properties": {
@@ -542,20 +520,6 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.Response-auth_tokenResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/auth.tokenResponse"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "entity.Response-entity_Todo": {
             "type": "object",
             "properties": {
@@ -564,20 +528,6 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/entity.Todo"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.Response-map_string_string": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/map_string_string"
                 },
                 "message": {
                     "type": "string"
@@ -656,30 +606,115 @@ const docTemplate = `{
                 }
             }
         },
-        "entity.UserLogin": {
+        "swagger.ConflictResponse": {
             "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
             "properties": {
-                "password": {
-                    "type": "string",
-                    "minLength": 8,
-                    "example": "password123"
+                "code": {
+                    "type": "integer",
+                    "example": 409
                 },
+                "message": {
+                    "type": "string",
+                    "example": "Username already exists"
+                }
+            }
+        },
+        "swagger.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid request data"
+                }
+            }
+        },
+        "swagger.RefreshRequest": {
+            "type": "object",
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
+        "swagger.ServerErrorResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 500
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Something went wrong, please try again later"
+                }
+            }
+        },
+        "swagger.SuccessRegisterResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.UserData"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "User successfully created"
+                }
+            }
+        },
+        "swagger.TokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"
+                }
+            }
+        },
+        "swagger.UnauthorizedResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 401
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid credentials"
+                }
+            }
+        },
+        "swagger.UserData": {
+            "type": "object",
+            "properties": {
                 "username": {
                     "type": "string",
-                    "maxLength": 20,
-                    "minLength": 3,
                     "example": "john_doe"
                 }
             }
         },
-        "map_string_string": {
+        "swagger.UserRequest": {
             "type": "object",
-            "additionalProperties": {
-                "type": "string"
+            "properties": {
+                "password": {
+                    "type": "string",
+                    "example": "password123"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
             }
         },
         "todo.createResponse": {

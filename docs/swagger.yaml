@@ -1,20 +1,5 @@
 basePath: /api/v2
 definitions:
-  auth.refreshRequest:
-    properties:
-      refresh_token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI
-        type: string
-    type: object
-  auth.tokenResponse:
-    properties:
-      access_token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI
-        type: string
-      refresh_token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI
-        type: string
-    type: object
   entity.Date:
     properties:
       time.Time:
@@ -39,30 +24,12 @@ definitions:
       total:
         type: integer
     type: object
-  entity.Response-auth_tokenResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/auth.tokenResponse'
-      message:
-        type: string
-    type: object
   entity.Response-entity_Todo:
     properties:
       code:
         type: integer
       data:
         $ref: '#/definitions/entity.Todo'
-      message:
-        type: string
-    type: object
-  entity.Response-map_string_string:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/map_string_string'
       message:
         type: string
     type: object
@@ -114,24 +81,81 @@ definitions:
     - tags
     - title
     type: object
-  entity.UserLogin:
+  swagger.ConflictResponse:
+    properties:
+      code:
+        example: 409
+        type: integer
+      message:
+        example: Username already exists
+        type: string
+    type: object
+  swagger.ErrorResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Invalid request data
+        type: string
+    type: object
+  swagger.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
+  swagger.ServerErrorResponse:
+    properties:
+      code:
+        example: 500
+        type: integer
+      message:
+        example: Something went wrong, please try again later
+        type: string
+    type: object
+  swagger.SuccessRegisterResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.UserData'
+      message:
+        example: User successfully created
+        type: string
+    type: object
+  swagger.TokenResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI
+        type: string
+    type: object
+  swagger.UnauthorizedResponse:
+    properties:
+      code:
+        example: 401
+        type: integer
+      message:
+        example: Invalid credentials
+        type: string
+    type: object
+  swagger.UserData:
+    properties:
+      username:
+        example: john_doe
+        type: string
+    type: object
+  swagger.UserRequest:
     properties:
       password:
         example: password123
-        minLength: 8
         type: string
       username:
         example: john_doe
-        maxLength: 20
-        minLength: 3
         type: string
-    required:
-    - password
-    - username
-    type: object
-  map_string_string:
-    additionalProperties:
-      type: string
     type: object
   todo.createResponse:
     properties:
@@ -158,26 +182,26 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/entity.UserLogin'
+          $ref: '#/definitions/swagger.UserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/entity.Response-auth_tokenResponse'
+            $ref: '#/definitions/swagger.TokenResponse'
         "400":
           description: Invalid request data
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "401":
           description: Invalid credentials
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       summary: User login
       tags:
       - auth
@@ -192,26 +216,26 @@ paths:
         name: refresh_token
         required: true
         schema:
-          $ref: '#/definitions/auth.refreshRequest'
+          $ref: '#/definitions/swagger.RefreshRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Tokens refreshed
           schema:
-            $ref: '#/definitions/entity.Response-auth_tokenResponse'
+            $ref: '#/definitions/swagger.TokenResponse'
         "400":
           description: Invalid request data
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "401":
           description: Invalid refresh token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       summary: Refresh access and refresh tokens
       tags:
       - auth
@@ -226,26 +250,26 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/entity.UserLogin'
+          $ref: '#/definitions/swagger.UserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: User successfully created
           schema:
-            $ref: '#/definitions/entity.Response-map_string_string'
+            $ref: '#/definitions/swagger.SuccessRegisterResponse'
         "400":
           description: Invalid request data or validation error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "409":
           description: Username already exists
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ConflictResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       summary: Register a new user
       tags:
       - auth

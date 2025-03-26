@@ -19,8 +19,8 @@ type User struct {
 }
 
 type UserLogin struct {
-	Username string `json:"username" example:"john_doe" validate:"required,min=3,max=20,alphanumunderscore"`
-	Password string `json:"password" example:"password123" validate:"required,min=8,passwordstrength"`
+	Username string `json:"username" validate:"required,min=3,max=20,alphanumunderscore"`
+	Password string `json:"password" validate:"required,min=8,passwordstrength"`
 }
 
 func HashPassword(password string) (string, error) {

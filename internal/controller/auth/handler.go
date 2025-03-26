@@ -17,15 +17,6 @@ type Handler struct {
 	logger       *slog.Logger
 }
 
-type refreshRequest struct {
-	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"`
-}
-
-type tokenResponse struct {
-	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"`
-	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"`
-}
-
 func NewHandler(userService service.UserService, tokenService service.TokenService, logger *slog.Logger) *Handler {
 	return &Handler{
 		userService:  userService,
@@ -40,11 +31,11 @@ func NewHandler(userService service.UserService, tokenService service.TokenServi
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param user body entity.UserLogin true "User registration data"
-// @Success 200 {object} entity.Response[map[string]string] "User successfully created"
-// @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
-// @Failure 409 {object} entity.Response[string] "Username already exists"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Param user body swagger.UserRequest true "User registration data"
+// @Success 200 {object} swagger.SuccessRegisterResponse "User successfully created"
+// @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
+// @Failure 409 {object} swagger.ConflictResponse "Username already exists"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /auth/register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Register")
@@ -88,11 +79,11 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param user body entity.UserLogin true "User login credentials"
-// @Success 200 {object} entity.Response[tokenResponse]  "Login successful"
-// @Failure 400 {object} entity.Response[string] "Invalid request data"
-// @Failure 401 {object} entity.Response[string] "Invalid credentials"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Param user body swagger.UserRequest true "User login credentials"
+// @Success 200 {object} swagger.TokenResponse "Login successful"
+// @Failure 400 {object} swagger.ErrorResponse "Invalid request data"
+// @Failure 401 {object} swagger.UnauthorizedResponse"Invalid credentials"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /auth/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Login")
@@ -130,10 +121,10 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Login successful", tokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
-	})
+	entity.SendResponse(w, http.StatusOK, "Login successful", struct {
+		AccessToken  string `json:"access_token"`
+		RefreshToken string `json:"refresh_token"`
+	}{AccessToken: accessToken, RefreshToken: refreshToken})
 	logger.Info("Successfully logged in user")
 }
 
@@ -143,17 +134,19 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param refresh_token body auth.refreshRequest true "Refresh token"
-// @Success 200 {object} entity.Response[tokenResponse] "Tokens refreshed"
-// @Failure 400 {object} entity.Response[string] "Invalid request data"
-// @Failure 401 {object} entity.Response[string] "Invalid refresh token"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Param refresh_token body swagger.RefreshRequest true "Refresh token"
+// @Success 200 {object} swagger.TokenResponse "Tokens refreshed"
+// @Failure 400 {object} swagger.ErrorResponse"Invalid request data"
+// @Failure 401 {object} swagger.UnauthorizedResponse "Invalid refresh token"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /auth/refresh [post]
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Refresh")
 	logger.Debug("Attempting to refresh tokens")
 
-	var refreshRequest refreshRequest
+	var refreshRequest struct {
+		RefreshToken string `json:"refresh_token"`
+	}
 	if err := utils.DecodeJSONStruct(r, &refreshRequest); err != nil {
 		logger.Warn("Failed to decode JSON", "error", err)
 		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
@@ -167,9 +160,9 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Tokens refreshed", tokenResponse{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+	entity.SendResponse(w, http.StatusOK, "Tokens refreshed", map[string]string{
+		"access_token":  accessToken,
+		"refresh_token": refreshToken,
 	})
 	logger.Info("Successfully refreshed tokens")
 }
