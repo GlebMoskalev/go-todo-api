@@ -1,86 +1,5 @@
 basePath: /api/v2
 definitions:
-  entity.Date:
-    properties:
-      time.Time:
-        type: string
-    type: object
-  entity.ListResponse-entity_Todo:
-    properties:
-      code:
-        type: integer
-      count:
-        type: integer
-      data:
-        items:
-          $ref: '#/definitions/entity.Todo'
-        type: array
-      limit:
-        type: integer
-      message:
-        type: string
-      offset:
-        type: integer
-      total:
-        type: integer
-    type: object
-  entity.Response-entity_Todo:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/entity.Todo'
-      message:
-        type: string
-    type: object
-  entity.Response-string:
-    properties:
-      code:
-        type: integer
-      data:
-        type: string
-      message:
-        type: string
-    type: object
-  entity.Response-todo_createResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/todo.createResponse'
-      message:
-        type: string
-    type: object
-  entity.Response-todo_emptyResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/todo.emptyResponse'
-      message:
-        type: string
-    type: object
-  entity.Todo:
-    properties:
-      description:
-        type: string
-      due_date:
-        $ref: '#/definitions/entity.Date'
-      id:
-        type: integer
-      tags:
-        items:
-          type: string
-        type: array
-      title:
-        minLength: 3
-        type: string
-    required:
-    - description
-    - due_date
-    - tags
-    - title
-    type: object
   swagger.ConflictResponse:
     properties:
       code:
@@ -90,6 +9,17 @@ definitions:
         example: Username already exists
         type: string
     type: object
+  swagger.CreateTodoResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.createResponse'
+      message:
+        example: Successfully create
+        type: string
+    type: object
   swagger.ErrorResponse:
     properties:
       code:
@@ -97,6 +27,49 @@ definitions:
         type: integer
       message:
         example: Invalid request data
+        type: string
+    type: object
+  swagger.InvalidIDResponse:
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Invalid ID
+        type: string
+    type: object
+  swagger.ListTodoResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      count:
+        example: 1
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/swagger.TodoResponse'
+        type: array
+      limit:
+        example: 20
+        type: integer
+      message:
+        example: Ok
+        type: string
+      offset:
+        example: 0
+        type: integer
+      total:
+        example: 1
+        type: integer
+    type: object
+  swagger.NotFoundResponse:
+    properties:
+      code:
+        example: 404
+        type: integer
+      message:
+        example: Todo not found
         type: string
     type: object
   swagger.RefreshRequest:
@@ -113,6 +86,15 @@ definitions:
         example: Something went wrong, please try again later
         type: string
     type: object
+  swagger.SuccessEmptyResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      message:
+        example: Successfully delete
+        type: string
+    type: object
   swagger.SuccessRegisterResponse:
     properties:
       code:
@@ -122,6 +104,58 @@ definitions:
         $ref: '#/definitions/swagger.UserData'
       message:
         example: User successfully created
+        type: string
+    type: object
+  swagger.SuccessTodoResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.TodoResponse'
+      message:
+        example: Successfully create
+        type: string
+    type: object
+  swagger.TodoRequest:
+    properties:
+      description:
+        example: Get milk, bread, and eggs
+        type: string
+      due_date:
+        example: "2025-04-01"
+        type: string
+      tags:
+        example:
+        - shopping
+        - urgent
+        items:
+          type: string
+        type: array
+      title:
+        example: Buy groceries
+        type: string
+    type: object
+  swagger.TodoResponse:
+    properties:
+      description:
+        example: Get milk, bread, and eggs
+        type: string
+      due_date:
+        example: "2025-04-01"
+        type: string
+      id:
+        example: 12
+        type: integer
+      tags:
+        example:
+        - shopping
+        - urgent
+        items:
+          type: string
+        type: array
+      title:
+        example: Buy groceries
         type: string
     type: object
   swagger.TokenResponse:
@@ -157,13 +191,11 @@ definitions:
         example: john_doe
         type: string
     type: object
-  todo.createResponse:
+  swagger.createResponse:
     properties:
       id:
         example: 12
         type: integer
-    type: object
-  todo.emptyResponse:
     type: object
 info:
   contact: {}
@@ -304,19 +336,19 @@ paths:
         "200":
           description: Todos successfully retrieved
           schema:
-            $ref: '#/definitions/entity.ListResponse-entity_Todo'
+            $ref: '#/definitions/swagger.ListTodoResponse'
         "400":
           description: Invalid query parameters
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "401":
           description: User not authenticated or invalid token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "500":
           description: Something went wrong, please try again later
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       security:
       - BearerAuth: []
       summary: Get all todos
@@ -332,26 +364,26 @@ paths:
         name: todo
         required: true
         schema:
-          $ref: '#/definitions/entity.Todo'
+          $ref: '#/definitions/swagger.TodoRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Todo successfully created
           schema:
-            $ref: '#/definitions/entity.Response-todo_createResponse'
+            $ref: '#/definitions/swagger.CreateTodoResponse'
         "400":
           description: Invalid request data or validation error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "401":
           description: User not authenticated or invalid token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       security:
       - BearerAuth: []
       summary: Create a todo
@@ -367,30 +399,30 @@ paths:
         name: todo
         required: true
         schema:
-          $ref: '#/definitions/entity.Todo'
+          $ref: '#/definitions/swagger.TodoRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Todo successfully updated
           schema:
-            $ref: '#/definitions/entity.Response-todo_emptyResponse'
+            $ref: '#/definitions/swagger.SuccessEmptyResponse'
         "400":
           description: Invalid request data or validation error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ErrorResponse'
         "401":
           description: User not authenticated or invalid token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "404":
           description: Todo not found
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.NotFoundResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       security:
       - BearerAuth: []
       summary: Update a todo
@@ -413,23 +445,23 @@ paths:
         "200":
           description: Successfully delete
           schema:
-            $ref: '#/definitions/entity.Response-todo_emptyResponse'
+            $ref: '#/definitions/swagger.SuccessEmptyResponse'
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.InvalidIDResponse'
         "401":
           description: User not authenticated or invalid token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "404":
           description: Todo not found
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.NotFoundResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       security:
       - BearerAuth: []
       summary: Delete a todo
@@ -451,23 +483,23 @@ paths:
         "200":
           description: Successfully create
           schema:
-            $ref: '#/definitions/entity.Response-entity_Todo'
+            $ref: '#/definitions/swagger.SuccessTodoResponse'
         "400":
           description: Invalid ID
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.InvalidIDResponse'
         "401":
           description: User not authenticated or invalid token
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.UnauthorizedResponse'
         "404":
           description: Todo not found
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.NotFoundResponse'
         "500":
           description: Internal server error
           schema:
-            $ref: '#/definitions/entity.Response-string'
+            $ref: '#/definitions/swagger.ServerErrorResponse'
       security:
       - BearerAuth: []
       summary: Get

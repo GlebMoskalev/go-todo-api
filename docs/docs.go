@@ -221,25 +221,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Todos successfully retrieved",
                         "schema": {
-                            "$ref": "#/definitions/entity.ListResponse-entity_Todo"
+                            "$ref": "#/definitions/swagger.ListTodoResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid query parameters",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "500": {
                         "description": "Something went wrong, please try again later",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -268,7 +268,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.Todo"
+                            "$ref": "#/definitions/swagger.TodoRequest"
                         }
                     }
                 ],
@@ -276,31 +276,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Todo successfully updated",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-todo_emptyResponse"
+                            "$ref": "#/definitions/swagger.SuccessEmptyResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request data or validation error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "404": {
                         "description": "Todo not found",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.NotFoundResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -329,7 +329,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/entity.Todo"
+                            "$ref": "#/definitions/swagger.TodoRequest"
                         }
                     }
                 ],
@@ -337,25 +337,25 @@ const docTemplate = `{
                     "200": {
                         "description": "Todo successfully created",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-todo_createResponse"
+                            "$ref": "#/definitions/swagger.CreateTodoResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid request data or validation error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -392,31 +392,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully create",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-entity_Todo"
+                            "$ref": "#/definitions/swagger.SuccessTodoResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.InvalidIDResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "404": {
                         "description": "Todo not found",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.NotFoundResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -451,31 +451,31 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully delete",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-todo_emptyResponse"
+                            "$ref": "#/definitions/swagger.SuccessEmptyResponse"
                         }
                     },
                     "400": {
                         "description": "Invalid ID",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.InvalidIDResponse"
                         }
                     },
                     "401": {
                         "description": "User not authenticated or invalid token",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
                     },
                     "404": {
                         "description": "Todo not found",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.NotFoundResponse"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "$ref": "#/definitions/entity.Response-string"
+                            "$ref": "#/definitions/swagger.ServerErrorResponse"
                         }
                     }
                 }
@@ -483,129 +483,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "entity.Date": {
-            "type": "object",
-            "properties": {
-                "time.Time": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.ListResponse-entity_Todo": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "count": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/entity.Todo"
-                    }
-                },
-                "limit": {
-                    "type": "integer"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "offset": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "entity.Response-entity_Todo": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/entity.Todo"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.Response-string": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "type": "string"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.Response-todo_createResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/todo.createResponse"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.Response-todo_emptyResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/todo.emptyResponse"
-                },
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
-        "entity.Todo": {
-            "type": "object",
-            "required": [
-                "description",
-                "due_date",
-                "tags",
-                "title"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "due_date": {
-                    "$ref": "#/definitions/entity.Date"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "tags": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "title": {
-                    "type": "string",
-                    "minLength": 3
-                }
-            }
-        },
         "swagger.ConflictResponse": {
             "type": "object",
             "properties": {
@@ -619,6 +496,22 @@ const docTemplate = `{
                 }
             }
         },
+        "swagger.CreateTodoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.createResponse"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully create"
+                }
+            }
+        },
         "swagger.ErrorResponse": {
             "type": "object",
             "properties": {
@@ -629,6 +522,67 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Invalid request data"
+                }
+            }
+        },
+        "swagger.InvalidIDResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 400
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Invalid ID"
+                }
+            }
+        },
+        "swagger.ListTodoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "count": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/swagger.TodoResponse"
+                    }
+                },
+                "limit": {
+                    "type": "integer",
+                    "example": 20
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Ok"
+                },
+                "offset": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "swagger.NotFoundResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 404
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Todo not found"
                 }
             }
         },
@@ -653,6 +607,19 @@ const docTemplate = `{
                 }
             }
         },
+        "swagger.SuccessEmptyResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully delete"
+                }
+            }
+        },
         "swagger.SuccessRegisterResponse": {
             "type": "object",
             "properties": {
@@ -666,6 +633,80 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "User successfully created"
+                }
+            }
+        },
+        "swagger.SuccessTodoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.TodoResponse"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully create"
+                }
+            }
+        },
+        "swagger.TodoRequest": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Get milk, bread, and eggs"
+                },
+                "due_date": {
+                    "type": "string",
+                    "example": "2025-04-01"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "shopping",
+                        "urgent"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Buy groceries"
+                }
+            }
+        },
+        "swagger.TodoResponse": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "Get milk, bread, and eggs"
+                },
+                "due_date": {
+                    "type": "string",
+                    "example": "2025-04-01"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 12
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "shopping",
+                        "urgent"
+                    ]
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Buy groceries"
                 }
             }
         },
@@ -717,7 +758,7 @@ const docTemplate = `{
                 }
             }
         },
-        "todo.createResponse": {
+        "swagger.createResponse": {
             "type": "object",
             "properties": {
                 "id": {
@@ -725,9 +766,6 @@ const docTemplate = `{
                     "example": 12
                 }
             }
-        },
-        "todo.emptyResponse": {
-            "type": "object"
         }
     },
     "securityDefinitions": {

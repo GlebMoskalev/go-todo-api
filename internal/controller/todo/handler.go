@@ -39,11 +39,11 @@ func NewHandler(service service.TodoService, logger *slog.Logger) *Handler {
 // @Produce json
 // @Param id path int true "Todo ID"
 // @Security BearerAuth
-// @Success 200 {object} entity.Response[entity.Todo] "Successfully create"
-// @Failure 400 {object} entity.Response[string] "Invalid ID"
-// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
-// @Failure 404 {object} entity.Response[string] "Todo not found"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Success 200 {object} swagger.SuccessTodoResponse "Successfully create"
+// @Failure 400 {object} swagger.InvalidIDResponse "Invalid ID"
+// @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
+// @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /todos/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Get")
@@ -90,11 +90,11 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Todo ID"
 // @Security BearerAuth
-// @Success 200 {object} entity.Response[emptyResponse] "Successfully delete"
-// @Failure 400 {object} entity.Response[string] "Invalid ID"
-// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
-// @Failure 404 {object} entity.Response[string] "Todo not found"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Success 200 {object} swagger.SuccessEmptyResponse "Successfully delete"
+// @Failure 400 {object} swagger.InvalidIDResponse "Invalid ID"
+// @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
+// @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /todos/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Delete")
@@ -137,12 +137,12 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Tags todo
 // @Accept json
 // @Produce json
-// @Param todo body entity.Todo true "Todo data"
+// @Param todo body swagger.TodoRequest true "Todo data"
 // @Security BearerAuth
-// @Success 200 {object} entity.Response[createResponse] "Todo successfully created"
-// @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
-// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Success 200 {object} swagger.CreateTodoResponse "Todo successfully created"
+// @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
+// @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /todos [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Create")
@@ -187,13 +187,13 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Tags todo
 // @Accept json
 // @Produce json
-// @Param todo body entity.Todo true "Updated todo data"
+// @Param todo body swagger.TodoRequest true "Updated todo data"
 // @Security BearerAuth
-// @Success 200 {object} entity.Response[emptyResponse] "Todo successfully updated"
-// @Failure 400 {object} entity.Response[string] "Invalid request data or validation error"
-// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
-// @Failure 404 {object} entity.Response[string] "Todo not found"
-// @Failure 500 {object} entity.Response[string] "Internal server error"
+// @Success 200 {object} swagger.SuccessEmptyResponse "Todo successfully updated"
+// @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
+// @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
+// @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
+// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /todos [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "Update")
@@ -249,10 +249,10 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 // @Param due_date query string false "Filter by due date (YYYY-MM-DD)"
 // @Param tags query string false "Filter by tags (comma-separated)"
 // @Security BearerAuth
-// @Success 200 {object} entity.ListResponse[entity.Todo] "Todos successfully retrieved"
-// @Failure 400 {object} entity.Response[string] "Invalid query parameters"
-// @Failure 401 {object} entity.Response[string] "User not authenticated or invalid token"
-// @Failure 500 {object} entity.Response[string] "Something went wrong, please try again later"
+// @Success 200 {object} swagger.ListTodoResponse "Todos successfully retrieved"
+// @Failure 400 {object} swagger.ErrorResponse "Invalid query parameters"
+// @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
+// @Failure 500 {object} swagger.ServerErrorResponse "Something went wrong, please try again later"
 // @Router /todos [get]
 func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "todo_handler", "GetAll")

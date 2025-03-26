@@ -9,6 +9,13 @@ type UserRequest struct {
 	Password string `json:"password" example:"password123"`
 }
 
+type TodoRequest struct {
+	Title       string   `json:"title" example:"Buy groceries"`
+	Description string   `json:"description" example:"Get milk, bread, and eggs"`
+	Tags        []string `json:"tags" example:"shopping,urgent"`
+	DueDate     string   `json:"due_date" example:"2025-04-01"`
+}
+
 type UserData struct {
 	Username string `json:"username" example:"john_doe"`
 }
@@ -42,4 +49,53 @@ type TokenResponse struct {
 type UnauthorizedResponse struct {
 	Code    int    `json:"code" example:"401"`
 	Message string `json:"message" example:"Invalid credentials"`
+}
+
+type TodoResponse struct {
+	ID          int      `json:"id" example:"12"`
+	Title       string   `json:"title" example:"Buy groceries"`
+	Description string   `json:"description" example:"Get milk, bread, and eggs"`
+	Tags        []string `json:"tags" example:"shopping,urgent"`
+	DueDate     string   `json:"due_date" example:"2025-04-01"`
+}
+
+type CreateTodoResponse struct {
+	Code    int            `json:"code" example:"200"`
+	Message string         `json:"message" example:"Successfully create"`
+	Data    createResponse `json:"data"`
+}
+
+type createResponse struct {
+	Id int `json:"id" example:"12"`
+}
+
+type SuccessTodoResponse struct {
+	Code    int          `json:"code" example:"200"`
+	Message string       `json:"message" example:"Successfully create"`
+	Data    TodoResponse `json:"data"`
+}
+
+type SuccessEmptyResponse struct {
+	Code    int    `json:"code" example:"200"`
+	Message string `json:"message" example:"Successfully delete"`
+}
+
+type ListTodoResponse struct {
+	Code    int            `json:"code" example:"200"`
+	Message string         `json:"message" example:"Ok"`
+	Offset  int            `json:"offset" example:"0"`
+	Limit   int            `json:"limit" example:"20"`
+	Count   int            `json:"count" example:"1"`
+	Total   int            `json:"total" example:"1"`
+	Results []TodoResponse `json:"data"`
+}
+
+type NotFoundResponse struct {
+	Code    int    `json:"code" example:"404"`
+	Message string `json:"message" example:"Todo not found"`
+}
+
+type InvalidIDResponse struct {
+	Code    int    `json:"code" example:"400"`
+	Message string `json:"message" example:"Invalid ID"`
 }
