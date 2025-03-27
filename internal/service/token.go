@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+//go:generate go run github.com/vektra/mockery/v2 --name=TokenService --output=./mocks
 type TokenService interface {
 	GenerateTokenPair(id uuid.UUID) (string, string, error)
 	ValidateAccessToken(tokenString string) (uuid.UUID, error)

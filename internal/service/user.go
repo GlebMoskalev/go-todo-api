@@ -8,6 +8,7 @@ import (
 	"log/slog"
 )
 
+//go:generate go run github.com/vektra/mockery/v2 --name=UserService --output=./mocks
 type UserService interface {
 	Register(ctx context.Context, user entity.UserLogin) (entity.User, error)
 	GetUser(ctx context.Context, id uuid.UUID) (entity.User, error)
