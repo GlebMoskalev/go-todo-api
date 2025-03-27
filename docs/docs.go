@@ -109,12 +109,6 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/swagger.UnauthorizedResponse"
                         }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/swagger.ServerErrorResponse"
-                        }
                     }
                 }
             }

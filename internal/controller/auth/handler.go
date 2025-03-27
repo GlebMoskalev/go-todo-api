@@ -138,7 +138,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} swagger.RefreshResponse "Tokens refreshed"
 // @Failure 400 {object} swagger.ErrorResponse"Invalid request data"
 // @Failure 401 {object} swagger.UnauthorizedResponse "Invalid refresh token"
-// @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
 // @Router /auth/refresh [post]
 func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	logger := utils.SetupLogger(r.Context(), h.logger, "auth_handler", "Refresh")

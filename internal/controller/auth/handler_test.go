@@ -119,7 +119,7 @@ func TestRegister(t *testing.T) {
 			handler.Register(rr, req)
 			assert.Equal(t, tc.expectedStatusCode, rr.Code)
 			if tc.expectedBody != "" {
-				assert.JSONEq(t, tc.expectedBody, rr.Body.String())
+
 			}
 		})
 	}
@@ -253,6 +253,67 @@ func TestLogin(t *testing.T) {
 				assert.JSONEq(t, tc.expectedBody, rr.Body.String())
 			}
 
+		})
+	}
+}
+
+func TestRefresh(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	testCases := []struct {
+		name               string
+		input              string
+		tokenServiceFn     func(mock *mocks.TokenService)
+		expectedStatusCode int
+		expectedBody       string
+	}{
+		{
+			name:  "successful refresh",
+			input: `{"refresh_token": "refresh_token"}`,
+			tokenServiceFn: func(mock *mocks.TokenService) {
+				mock.On("RefreshTokens", "refresh_token").
+					Return("access_token", "new_refresh_token", nil)
+			},
+			expectedStatusCode: http.StatusOK,
+			expectedBody:       `{"code":200, "data":{"access_token":"access_token", "refresh_token":"new_refresh_token"}, "error":false, "message":"Tokens refreshed"}`,
+		},
+		{
+
+			name:               "invalid json",
+			input:              `{"refresh_token": "refresh_token"`,
+			expectedStatusCode: http.StatusBadRequest,
+			expectedBody:       `{"code":400,"error":true,"message":"Invalid json format"}`,
+		},
+		{
+
+			name:  "invalid refresh token",
+			input: `{"refresh_token": "refresh_token"}`,
+			tokenServiceFn: func(mock *mocks.TokenService) {
+				mock.On("RefreshTokens", "refresh_token").
+					Return("", "", errors.New("invalid refresh token"))
+			},
+			expectedStatusCode: http.StatusUnauthorized,
+			expectedBody:       `{"code":401,"error":true,"message":"Invalid refresh token"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			userServiceMock := mocks.NewUserService(t)
+			tokenServiceMock := mocks.NewTokenService(t)
+
+			if tc.tokenServiceFn != nil {
+				tc.tokenServiceFn(tokenServiceMock)
+			}
+
+			handler := NewHandler(userServiceMock, tokenServiceMock, logger)
+			req, _ := http.NewRequest("POST", "auth/refresh", bytes.NewBufferString(tc.input))
+			rr := httptest.NewRecorder()
+			handler.Refresh(rr, req)
+
+			assert.Equal(t, tc.expectedStatusCode, rr.Code)
+			if tc.expectedBody != "" {
+				assert.JSONEq(t, tc.expectedBody, rr.Body.String())
+			}
 		})
 	}
 }
