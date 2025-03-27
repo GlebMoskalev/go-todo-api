@@ -114,7 +114,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.ID)
+	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(r.Context(), user.ID)
 	if err != nil {
 		logger.Error("Failed to generate tokens", "error", err)
 		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
@@ -152,7 +152,7 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := h.tokenService.RefreshTokens(refreshRequest.RefreshToken)
+	accessToken, refreshToken, err := h.tokenService.RefreshTokens(r.Context(), refreshRequest.RefreshToken)
 	if err != nil {
 		logger.Warn("Failed to refresh tokens", "error", err)
 		entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid refresh token", nil)

@@ -13,10 +13,10 @@ import (
 
 //go:generate go run github.com/vektra/mockery/v2 --name=TokenService --output=./mocks
 type TokenService interface {
-	GenerateTokenPair(id uuid.UUID) (string, string, error)
+	GenerateTokenPair(ctx context.Context, id uuid.UUID) (string, string, error)
 	ValidateAccessToken(tokenString string) (uuid.UUID, error)
 	ValidateRefreshToken(tokenString string) (uuid.UUID, error)
-	RefreshTokens(refreshTokenString string) (string, string, error)
+	RefreshTokens(ctx context.Context, refreshTokenString string) (string, string, error)
 }
 
 type tokenService struct {
@@ -36,13 +36,13 @@ func NewTokenService(userRepo repository.UserRepository, tokenRepo repository.To
 	}
 }
 
-func (s *tokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) {
+func (s *tokenService) GenerateTokenPair(ctx context.Context, id uuid.UUID) (string, string, error) {
 	accessToken, err := s.generateAccessToken(id)
 	if err != nil {
 		return "", "", err
 	}
 
-	refreshToken, err := s.generateRefreshToken(id)
+	refreshToken, err := s.generateRefreshToken(ctx, id)
 	if err != nil {
 		return "", "", err
 	}
@@ -60,7 +60,7 @@ func (s *tokenService) generateAccessToken(id uuid.UUID) (string, error) {
 	return token.SignedString([]byte(s.config.Token.AccessTokenSecret))
 }
 
-func (s *tokenService) generateRefreshToken(id uuid.UUID) (string, error) {
+func (s *tokenService) generateRefreshToken(ctx context.Context, id uuid.UUID) (string, error) {
 	payload := jwt.MapClaims{
 		"id":  id,
 		"exp": time.Now().UTC().Add(time.Duration(s.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
@@ -71,9 +71,6 @@ func (s *tokenService) generateRefreshToken(id uuid.UUID) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
-	defer cancel()
 
 	err = s.tokenRepo.SaveRefreshToken(ctx, id, refreshToken,
 		time.Duration(s.config.Token.RefreshTokenExpire)*time.Minute)
@@ -94,7 +91,6 @@ func (s *tokenService) ValidateAccessToken(tokenString string) (uuid.UUID, error
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-
 		return uuid.Parse(claims["id"].(string))
 	}
 	return uuid.Nil, errors.New("invalid token")
@@ -115,13 +111,12 @@ func (s *tokenService) ValidateRefreshToken(tokenString string) (uuid.UUID, erro
 	return uuid.Nil, errors.New("invalid token")
 }
 
-func (s *tokenService) RefreshTokens(refreshTokenString string) (string, string, error) {
+func (s *tokenService) RefreshTokens(ctx context.Context, refreshTokenString string) (string, string, error) {
 	id, err := s.ValidateRefreshToken(refreshTokenString)
 	if err != nil {
 		return "", "", err
 	}
 
-	ctx := context.Background()
 	isValid, err := s.tokenRepo.ValidateRefreshToken(ctx, id, refreshTokenString)
 	if err != nil || !isValid {
 		return "", "", errors.New("invalid refresh token")
@@ -132,5 +127,5 @@ func (s *tokenService) RefreshTokens(refreshTokenString string) (string, string,
 		return "", "", err
 	}
 
-	return s.GenerateTokenPair(id)
+	return s.GenerateTokenPair(ctx, id)
 }

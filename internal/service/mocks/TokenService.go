@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/google/uuid"
@@ -13,9 +15,9 @@ type TokenService struct {
 	mock.Mock
 }
 
-// GenerateTokenPair provides a mock function with given fields: id
-func (_m *TokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) {
-	ret := _m.Called(id)
+// GenerateTokenPair provides a mock function with given fields: ctx, id
+func (_m *TokenService) GenerateTokenPair(ctx context.Context, id uuid.UUID) (string, string, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateTokenPair")
@@ -24,23 +26,23 @@ func (_m *TokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) 
 	var r0 string
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) (string, string, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (string, string, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) string); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) string); ok {
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID) string); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) string); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(uuid.UUID) error); ok {
-		r2 = rf(id)
+	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
+		r2 = rf(ctx, id)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -48,9 +50,9 @@ func (_m *TokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) 
 	return r0, r1, r2
 }
 
-// RefreshTokens provides a mock function with given fields: refreshTokenString
-func (_m *TokenService) RefreshTokens(refreshTokenString string) (string, string, error) {
-	ret := _m.Called(refreshTokenString)
+// RefreshTokens provides a mock function with given fields: ctx, refreshTokenString
+func (_m *TokenService) RefreshTokens(ctx context.Context, refreshTokenString string) (string, string, error) {
+	ret := _m.Called(ctx, refreshTokenString)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshTokens")
@@ -59,23 +61,23 @@ func (_m *TokenService) RefreshTokens(refreshTokenString string) (string, string
 	var r0 string
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string) (string, string, error)); ok {
-		return rf(refreshTokenString)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, string, error)); ok {
+		return rf(ctx, refreshTokenString)
 	}
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(refreshTokenString)
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, refreshTokenString)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) string); ok {
-		r1 = rf(refreshTokenString)
+	if rf, ok := ret.Get(1).(func(context.Context, string) string); ok {
+		r1 = rf(ctx, refreshTokenString)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(refreshTokenString)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, refreshTokenString)
 	} else {
 		r2 = ret.Error(2)
 	}

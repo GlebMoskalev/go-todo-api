@@ -152,7 +152,7 @@ func TestLogin(t *testing.T) {
 					}, nil)
 			},
 			tokenServiceFn: func(mock *mocks.TokenService) {
-				mock.On("GenerateTokenPair", userID).
+				mock.On("GenerateTokenPair", context.Background(), userID).
 					Return("access_token", "refresh_token", nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -209,7 +209,7 @@ func TestLogin(t *testing.T) {
 					}, nil)
 			},
 			tokenServiceFn: func(mock *mocks.TokenService) {
-				mock.On("GenerateTokenPair", userID).
+				mock.On("GenerateTokenPair", context.Background(), userID).
 					Return("", "", errors.New("internal server error"))
 			},
 			expectedStatusCode: http.StatusInternalServerError,
@@ -270,7 +270,7 @@ func TestRefresh(t *testing.T) {
 			name:  "successful refresh",
 			input: `{"refresh_token": "refresh_token"}`,
 			tokenServiceFn: func(mock *mocks.TokenService) {
-				mock.On("RefreshTokens", "refresh_token").
+				mock.On("RefreshTokens", context.Background(), "refresh_token").
 					Return("access_token", "new_refresh_token", nil)
 			},
 			expectedStatusCode: http.StatusOK,
@@ -288,7 +288,7 @@ func TestRefresh(t *testing.T) {
 			name:  "invalid refresh token",
 			input: `{"refresh_token": "refresh_token"}`,
 			tokenServiceFn: func(mock *mocks.TokenService) {
-				mock.On("RefreshTokens", "refresh_token").
+				mock.On("RefreshTokens", context.Background(), "refresh_token").
 					Return("", "", errors.New("invalid refresh token"))
 			},
 			expectedStatusCode: http.StatusUnauthorized,
