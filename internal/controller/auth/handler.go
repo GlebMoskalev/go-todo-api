@@ -32,7 +32,7 @@ func NewHandler(userService service.UserService, tokenService service.TokenServi
 // @Accept json
 // @Produce json
 // @Param user body swagger.UserRequest true "User registration data"
-// @Success 200 {object} swagger.SuccessRegisterResponse "User successfully created"
+// @Success 201 {object} swagger.SuccessRegisterResponse "User successfully created"
 // @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
 // @Failure 409 {object} swagger.ConflictResponse "Username already exists"
 // @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
@@ -67,7 +67,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, false, "User successfully created", map[string]string{
+	entity.SendResponse(w, http.StatusCreated, false, "User successfully created", map[string]string{
 		"username": createdUser.Username,
 	})
 	logger.Info("Successfully registered user")

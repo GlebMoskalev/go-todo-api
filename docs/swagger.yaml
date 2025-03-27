@@ -12,7 +12,7 @@ definitions:
   swagger.CreateTodoResponse:
     properties:
       code:
-        example: 200
+        example: 201
         type: integer
       data:
         $ref: '#/definitions/swagger.createResponse'
@@ -155,7 +155,7 @@ definitions:
   swagger.SuccessRegisterResponse:
     properties:
       code:
-        example: 200
+        example: 201
         type: integer
       data:
         $ref: '#/definitions/swagger.UserData'
@@ -350,7 +350,7 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: User successfully created
           schema:
             $ref: '#/definitions/swagger.SuccessRegisterResponse'
@@ -432,7 +432,7 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: Todo successfully created
           schema:
             $ref: '#/definitions/swagger.CreateTodoResponse'

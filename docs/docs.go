@@ -144,7 +144,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "User successfully created",
                         "schema": {
                             "$ref": "#/definitions/swagger.SuccessRegisterResponse"
@@ -334,7 +334,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Todo successfully created",
                         "schema": {
                             "$ref": "#/definitions/swagger.CreateTodoResponse"
@@ -501,7 +501,7 @@ const docTemplate = `{
             "properties": {
                 "code": {
                     "type": "integer",
-                    "example": 200
+                    "example": 201
                 },
                 "data": {
                     "$ref": "#/definitions/swagger.createResponse"
@@ -705,7 +705,7 @@ const docTemplate = `{
             "properties": {
                 "code": {
                     "type": "integer",
-                    "example": 200
+                    "example": 201
                 },
                 "data": {
                     "$ref": "#/definitions/swagger.UserData"

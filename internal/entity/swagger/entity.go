@@ -21,7 +21,7 @@ type UserData struct {
 }
 
 type SuccessRegisterResponse struct {
-	Code    int      `json:"code" example:"200"`
+	Code    int      `json:"code" example:"201"`
 	Error   bool     `json:"error" example:"false"`
 	Message string   `json:"message" example:"User successfully created"`
 	Data    UserData `json:"data"`
@@ -78,7 +78,7 @@ type TodoResponse struct {
 }
 
 type CreateTodoResponse struct {
-	Code    int            `json:"code" example:"200"`
+	Code    int            `json:"code" example:"201"`
 	Error   bool           `json:"error" example:"false"`
 	Message string         `json:"message" example:"Successfully create"`
 	Data    createResponse `json:"data"`

@@ -137,7 +137,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "User successfully created",
                         "schema": {
                             "$ref": "#/definitions/swagger.SuccessRegisterResponse"
@@ -327,7 +327,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "Todo successfully created",
                         "schema": {
                             "$ref": "#/definitions/swagger.CreateTodoResponse"
@@ -494,7 +494,7 @@
             "properties": {
                 "code": {
                     "type": "integer",
-                    "example": 200
+                    "example": 201
                 },
                 "data": {
                     "$ref": "#/definitions/swagger.createResponse"
@@ -698,7 +698,7 @@
             "properties": {
                 "code": {
                     "type": "integer",
-                    "example": 200
+                    "example": 201
                 },
                 "data": {
                     "$ref": "#/definitions/swagger.UserData"

@@ -133,7 +133,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param todo body swagger.TodoRequest true "Todo data"
 // @Security BearerAuth
-// @Success 200 {object} swagger.CreateTodoResponse "Todo successfully created"
+// @Success 201 {object} swagger.CreateTodoResponse "Todo successfully created"
 // @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
 // @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
 // @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
@@ -171,7 +171,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, false, "Successfully create", map[string]int{
+	entity.SendResponse(w, http.StatusCreated, false, "Successfully create", map[string]int{
 		"id": id,
 	})
 	logger.Info("Successfully create todo")
