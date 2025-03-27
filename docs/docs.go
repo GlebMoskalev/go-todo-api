@@ -276,7 +276,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Todo successfully updated",
                         "schema": {
-                            "$ref": "#/definitions/swagger.SuccessEmptyResponse"
+                            "$ref": "#/definitions/swagger.UpdateResponse"
                         }
                     },
                     "400": {
@@ -451,7 +451,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully delete",
                         "schema": {
-                            "$ref": "#/definitions/swagger.SuccessEmptyResponse"
+                            "$ref": "#/definitions/swagger.DeleteResponse"
                         }
                     },
                     "400": {
@@ -513,6 +513,23 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Successfully create"
+                }
+            }
+        },
+        "swagger.DeleteResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully delete"
                 }
             }
         },
@@ -683,23 +700,6 @@ const docTemplate = `{
                 }
             }
         },
-        "swagger.SuccessEmptyResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer",
-                    "example": 200
-                },
-                "error": {
-                    "type": "boolean",
-                    "example": false
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Successfully delete"
-                }
-            }
-        },
         "swagger.SuccessRegisterResponse": {
             "type": "object",
             "properties": {
@@ -792,6 +792,23 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Invalid credentials"
+                }
+            }
+        },
+        "swagger.UpdateResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully update"
                 }
             }
         },

@@ -12,7 +12,7 @@ import (
 type TokenRepository interface {
 	SaveRefreshToken(ctx context.Context, userID uuid.UUID, token string, expiry time.Duration) error
 	ValidateRefreshToken(ctx context.Context, userID uuid.UUID, token string) (bool, error)
-	DeleteRefreshToken(ctx context.Context, userID uuid.UUID) error
+	DeleteRefreshToken(ctx context.Context, refreshToken string) error
 }
 
 type tokenRepository struct {
@@ -30,7 +30,7 @@ func (r *tokenRepository) SaveRefreshToken(ctx context.Context, userID uuid.UUID
 	_, err := r.db.ExecContext(ctx,
 		"INSERT INTO refresh_tokens (token, expirydate, userid) VALUES ($1, $2, $3)",
 		token,
-		time.Now().Add(expiry),
+		time.Now().UTC().Add(expiry),
 		userID,
 	)
 	if err != nil {
@@ -60,10 +60,10 @@ func (r *tokenRepository) ValidateRefreshToken(ctx context.Context, userID uuid.
 	return count > 0, nil
 }
 
-func (r *tokenRepository) DeleteRefreshToken(ctx context.Context, userID uuid.UUID) error {
+func (r *tokenRepository) DeleteRefreshToken(ctx context.Context, refreshToken string) error {
 	logger := utils.SetupLogger(ctx, r.logger, "token_repository", "DeleteRefreshToken")
 
-	_, err := r.db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE userid = $1", userID)
+	_, err := r.db.ExecContext(ctx, "DELETE FROM refresh_tokens WHERE token = $1", refreshToken)
 	if err != nil {
 		logger.Error("Failed to delete refresh tokens", "error", err)
 		return err

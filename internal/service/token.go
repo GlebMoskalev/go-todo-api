@@ -52,7 +52,7 @@ func (s *tokenService) GenerateTokenPair(id uuid.UUID) (string, string, error) {
 func (s *tokenService) generateAccessToken(id uuid.UUID) (string, error) {
 	payload := jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(time.Duration(s.config.Token.AccessTokenExpire) * time.Minute).Unix(),
+		"exp": time.Now().UTC().Add(time.Duration(s.config.Token.AccessTokenExpire) * time.Minute).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -62,7 +62,7 @@ func (s *tokenService) generateAccessToken(id uuid.UUID) (string, error) {
 func (s *tokenService) generateRefreshToken(id uuid.UUID) (string, error) {
 	payload := jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(time.Duration(s.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
+		"exp": time.Now().UTC().Add(time.Duration(s.config.Token.RefreshTokenExpire) * time.Minute).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
@@ -126,12 +126,7 @@ func (s *tokenService) RefreshTokens(refreshTokenString string) (string, string,
 		return "", "", errors.New("invalid refresh token")
 	}
 
-	user, err := s.userRepo.Get(ctx, id)
-	if err != nil {
-		return "", "", err
-	}
-
-	err = s.tokenRepo.DeleteRefreshToken(ctx, user.ID)
+	err = s.tokenRepo.DeleteRefreshToken(ctx, refreshTokenString)
 	if err != nil {
 		return "", "", err
 	}

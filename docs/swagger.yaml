@@ -23,6 +23,18 @@ definitions:
         example: Successfully create
         type: string
     type: object
+  swagger.DeleteResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      error:
+        example: false
+        type: boolean
+      message:
+        example: Successfully delete
+        type: string
+    type: object
   swagger.ErrorResponse:
     properties:
       code:
@@ -140,18 +152,6 @@ definitions:
         example: Something went wrong, please try again later
         type: string
     type: object
-  swagger.SuccessEmptyResponse:
-    properties:
-      code:
-        example: 200
-        type: integer
-      error:
-        example: false
-        type: boolean
-      message:
-        example: Successfully delete
-        type: string
-    type: object
   swagger.SuccessRegisterResponse:
     properties:
       code:
@@ -217,6 +217,18 @@ definitions:
         type: boolean
       message:
         example: Invalid credentials
+        type: string
+    type: object
+  swagger.UpdateResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      error:
+        example: false
+        type: boolean
+      message:
+        example: Successfully update
         type: string
     type: object
   swagger.UserData:
@@ -458,7 +470,7 @@ paths:
         "200":
           description: Todo successfully updated
           schema:
-            $ref: '#/definitions/swagger.SuccessEmptyResponse'
+            $ref: '#/definitions/swagger.UpdateResponse'
         "400":
           description: Invalid request data or validation error
           schema:
@@ -497,7 +509,7 @@ paths:
         "200":
           description: Successfully delete
           schema:
-            $ref: '#/definitions/swagger.SuccessEmptyResponse'
+            $ref: '#/definitions/swagger.DeleteResponse'
         "400":
           description: Invalid ID
           schema:

@@ -185,7 +185,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param todo body swagger.TodoRequest true "Updated todo data"
 // @Security BearerAuth
-// @Success 200 {object} swagger.SuccessEmptyResponse "Todo successfully updated"
+// @Success 200 {object} swagger.UpdateResponse "Todo successfully updated"
 // @Failure 400 {object} swagger.ErrorResponse "Invalid request data or validation error"
 // @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
 // @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
