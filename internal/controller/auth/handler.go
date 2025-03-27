@@ -44,14 +44,14 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	var userLogin entity.UserLogin
 	if err := utils.DecodeJSONStruct(r, &userLogin); err != nil {
 		logger.Warn("Failed to decode JSON", "error", err)
-		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, err.Error(), nil)
 		return
 	}
 
 	if validationErrors := userLogin.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
-		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, msg, nil)
 		return
 	}
 
@@ -59,15 +59,15 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrUsernameExists) {
 			logger.Warn("Username already exists")
-			entity.SendResponse[any](w, http.StatusConflict, "Username already exists", nil)
+			entity.SendResponse[any](w, http.StatusConflict, true, "Username already exists", nil)
 			return
 		}
 		logger.Error("Failed to create user", "error", err)
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "User successfully created", map[string]string{
+	entity.SendResponse(w, http.StatusOK, false, "User successfully created", map[string]string{
 		"username": createdUser.Username,
 	})
 	logger.Info("Successfully registered user")
@@ -80,7 +80,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param user body swagger.UserRequest true "User login credentials"
-// @Success 200 {object} swagger.TokenResponse "Login successful"
+// @Success 200 {object} swagger.LoginResponse "Login successful"
 // @Failure 400 {object} swagger.ErrorResponse "Invalid request data"
 // @Failure 401 {object} swagger.UnauthorizedResponse"Invalid credentials"
 // @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
@@ -92,7 +92,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var userLogin entity.UserLogin
 	if err := utils.DecodeJSONStruct(r, &userLogin); err != nil {
 		logger.Warn("Failed to decode JSON", "error", err)
-		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, err.Error(), nil)
 		return
 	}
 
@@ -100,28 +100,28 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrUserNotFound) {
 			logger.Warn("User not found")
-			entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
+			entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid credentials", nil)
 			return
 		}
 		logger.Error("Failed to get user", "error", err)
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
 	if !entity.VerifyPassword(userLogin.Password, user.PasswordHash) {
 		logger.Warn("Invalid password")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid credentials", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid credentials", nil)
 		return
 	}
 
 	accessToken, refreshToken, err := h.tokenService.GenerateTokenPair(user.ID)
 	if err != nil {
 		logger.Error("Failed to generate tokens", "error", err)
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Login successful", struct {
+	entity.SendResponse(w, http.StatusOK, false, "Login successful", struct {
 		AccessToken  string `json:"access_token"`
 		RefreshToken string `json:"refresh_token"`
 	}{AccessToken: accessToken, RefreshToken: refreshToken})
@@ -135,7 +135,7 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 // @Accept json
 // @Produce json
 // @Param refresh_token body swagger.RefreshRequest true "Refresh token"
-// @Success 200 {object} swagger.TokenResponse "Tokens refreshed"
+// @Success 200 {object} swagger.RefreshResponse "Tokens refreshed"
 // @Failure 400 {object} swagger.ErrorResponse"Invalid request data"
 // @Failure 401 {object} swagger.UnauthorizedResponse "Invalid refresh token"
 // @Failure 500 {object} swagger.ServerErrorResponse "Internal server error"
@@ -149,18 +149,18 @@ func (h *Handler) Refresh(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := utils.DecodeJSONStruct(r, &refreshRequest); err != nil {
 		logger.Warn("Failed to decode JSON", "error", err)
-		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, err.Error(), nil)
 		return
 	}
 
 	accessToken, refreshToken, err := h.tokenService.RefreshTokens(refreshRequest.RefreshToken)
 	if err != nil {
 		logger.Warn("Failed to refresh tokens", "error", err)
-		entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid refresh token", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid refresh token", nil)
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Tokens refreshed", map[string]string{
+	entity.SendResponse(w, http.StatusOK, false, "Tokens refreshed", map[string]string{
 		"access_token":  accessToken,
 		"refresh_token": refreshToken,
 	})

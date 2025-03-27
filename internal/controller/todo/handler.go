@@ -21,12 +21,6 @@ type Handler struct {
 	logger  *slog.Logger
 }
 
-type emptyResponse struct{}
-
-type createResponse struct {
-	Id int `json:"id" example:"12"`
-}
-
 func NewHandler(service service.TodoService, logger *slog.Logger) *Handler {
 	return &Handler{service: service, logger: logger}
 }
@@ -39,7 +33,7 @@ func NewHandler(service service.TodoService, logger *slog.Logger) *Handler {
 // @Produce json
 // @Param id path int true "Todo ID"
 // @Security BearerAuth
-// @Success 200 {object} swagger.SuccessTodoResponse "Successfully create"
+// @Success 200 {object} swagger.GetTodoResponse "Successfully create"
 // @Failure 400 {object} swagger.InvalidIDResponse "Invalid ID"
 // @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
 // @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
@@ -52,7 +46,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
 		logger.Error("Id not found in context")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "User not authenticated", nil)
 		return
 	}
 
@@ -60,7 +54,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid ID", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, "Invalid ID", nil)
 		return
 	}
 
@@ -69,16 +63,16 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrTodoNotFound) {
 			logger.Warn("Todo not found")
-			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+			entity.SendResponse[any](w, http.StatusNotFound, true, "Todo not found", nil)
 			return
 		}
 
 		logger.Error("Failed to get todo", "error", err)
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Successfully create", todo)
+	entity.SendResponse(w, http.StatusOK, false, "Successfully fetch", todo)
 	logger.Info("Successfully fetched todo")
 }
 
@@ -90,7 +84,7 @@ func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 // @Produce json
 // @Param id path int true "Todo ID"
 // @Security BearerAuth
-// @Success 200 {object} swagger.SuccessEmptyResponse "Successfully delete"
+// @Success 200 {object} swagger.DeleteResponse "Successfully delete"
 // @Failure 400 {object} swagger.InvalidIDResponse "Invalid ID"
 // @Failure 401 {object} swagger.UnauthorizedResponse "User not authenticated or invalid token"
 // @Failure 404 {object} swagger.NotFoundResponse "Todo not found"
@@ -103,7 +97,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
 		logger.Error("Id not found in context")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "User not authenticated", nil)
 		return
 	}
 
@@ -111,7 +105,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		logger.Warn("Invalid id", "todo_id", idStr)
-		entity.SendResponse[any](w, http.StatusBadRequest, "Invalid ID", nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, "Invalid ID", nil)
 		return
 	}
 
@@ -120,14 +114,14 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("Failed to delete todo", "error", err)
 		if errors.Is(err, entity.ErrTodoNotFound) {
-			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+			entity.SendResponse[any](w, http.StatusNotFound, true, "Todo not found", nil)
 			return
 		}
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse[any](w, http.StatusOK, "Successfully delete", nil)
+	entity.SendResponse[any](w, http.StatusOK, false, "Successfully delete", nil)
 	logger.Info("Successfully delete todo")
 }
 
@@ -151,7 +145,7 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
 		logger.Error("Id not found in context")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "User not authenticated", nil)
 		return
 	}
 
@@ -159,25 +153,27 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
 		logger.Warn("Failed to decode json", "error", err)
-		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, err.Error(), nil)
 		return
 	}
 
 	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
-		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, msg, nil)
 		return
 	}
 
 	id, err := h.service.Create(r.Context(), userID, todo)
 	if err != nil {
 		logger.Error("Failed to create todo")
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse(w, http.StatusOK, "Successfully create", createResponse{Id: id})
+	entity.SendResponse(w, http.StatusOK, false, "Successfully create", map[string]int{
+		"id": id,
+	})
 	logger.Info("Successfully create todo")
 }
 
@@ -202,7 +198,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
 		logger.Error("Id not found in context")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "User not authenticated", nil)
 		return
 	}
 
@@ -210,14 +206,14 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	err := utils.DecodeJSONStruct(r, &todo)
 	if err != nil {
 		logger.Warn("Failed to decode json", "error", err)
-		entity.SendResponse[any](w, http.StatusBadRequest, err.Error(), nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, err.Error(), nil)
 		return
 	}
 
 	if validationErrors := todo.Validate(); validationErrors != nil {
 		msg := fmt.Sprintf("Validation error: %s", strings.Join(validationErrors, ";"))
 		logger.Warn(msg)
-		entity.SendResponse[any](w, http.StatusBadRequest, msg, nil)
+		entity.SendResponse[any](w, http.StatusBadRequest, true, msg, nil)
 		return
 	}
 
@@ -225,16 +221,16 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, entity.ErrTodoNotFound) {
 			logger.Warn("Todo not found")
-			entity.SendResponse[any](w, http.StatusNotFound, "Todo not found", nil)
+			entity.SendResponse[any](w, http.StatusNotFound, true, "Todo not found", nil)
 			return
 		}
 
 		logger.Error("Failed to update todo")
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendResponse[any](w, http.StatusOK, "Successfully update", nil)
+	entity.SendResponse[any](w, http.StatusOK, false, "Successfully update", nil)
 	logger.Info("Successfully update todo")
 }
 
@@ -261,7 +257,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value("id").(uuid.UUID)
 	if !ok {
 		logger.Error("Id not found in context")
-		entity.SendResponse[any](w, http.StatusUnauthorized, "User not authenticated", nil)
+		entity.SendResponse[any](w, http.StatusUnauthorized, true, "User not authenticated", nil)
 		return
 	}
 
@@ -273,7 +269,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		limitInt, err := strconv.Atoi(limitStr)
 		if err != nil {
 			logger.Warn("Invalid limit parameter", "limit", limitStr)
-			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid limit parameter", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, true, "Invalid limit parameter", nil)
 			return
 		}
 		limit = limitInt
@@ -282,7 +278,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		offsetInt, err := strconv.Atoi(offsetStr)
 		if err != nil {
 			logger.Warn("Invalid limit parameter", "limit", offsetStr)
-			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid offset parameter", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, true, "Invalid offset parameter", nil)
 			return
 		}
 		offset = offsetInt
@@ -294,7 +290,7 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 		dueDate, err := time.Parse(time.DateOnly, dueDateStr)
 		if err != nil {
 			logger.Warn("Invalid due_date parameter", "due_date", dueDateStr)
-			entity.SendResponse[any](w, http.StatusBadRequest, "Invalid due_date format. Use YYYY-MM-DD", nil)
+			entity.SendResponse[any](w, http.StatusBadRequest, true, "Invalid due_date format. Use YYYY-MM-DD", nil)
 			return
 		}
 		date := entity.Date{Time: dueDate}
@@ -318,10 +314,10 @@ func (h *Handler) GetAll(w http.ResponseWriter, r *http.Request) {
 	todos, total, err := h.service.GetAll(r.Context(), userID, pagination, filters)
 	if err != nil {
 		logger.Error("Failed to fetch todos", "error", err)
-		entity.SendResponse[any](w, http.StatusInternalServerError, entity.ServerFailureMessage, nil)
+		entity.SendResponse[any](w, http.StatusInternalServerError, true, entity.ServerFailureMessage, nil)
 		return
 	}
 
-	entity.SendListResponse(w, http.StatusOK, "Ok", pagination, total, todos)
+	entity.SendListResponse(w, http.StatusOK, false, "Successfully fetch", pagination, total, todos)
 	logger.Info("Successfully fetched todos")
 }

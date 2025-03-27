@@ -13,19 +13,19 @@ func AuthMiddleware(tokenService service.TokenService) func(http.Handler) http.H
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				entity.SendResponse[any](w, http.StatusUnauthorized, "Missing authorization token", nil)
+				entity.SendResponse[any](w, http.StatusUnauthorized, true, "Missing authorization token", nil)
 				return
 			}
 
 			parts := strings.Split(authHeader, " ")
 			if len(parts) != 2 || parts[0] != "Bearer" {
-				entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid token format", nil)
+				entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid token format", nil)
 				return
 			}
 
 			id, err := tokenService.ValidateAccessToken(parts[1])
 			if err != nil {
-				entity.SendResponse[any](w, http.StatusUnauthorized, "Invalid or expired token", nil)
+				entity.SendResponse[any](w, http.StatusUnauthorized, true, "Invalid or expired token", nil)
 				return
 			}
 

@@ -9,12 +9,14 @@ const ServerFailureMessage = "Something went wrong, please try again later"
 
 type Response[T any] struct {
 	Code    int    `json:"code"`
+	Error   bool   `json:"error"`
 	Message string `json:"message"`
 	Data    T      `json:"data,omitempty"`
 }
 
 type ListResponse[T any] struct {
 	Code    int    `json:"code"`
+	Error   bool   `json:"error"`
 	Message string `json:"message"`
 	Offset  int    `json:"offset"`
 	Limit   int    `json:"limit"`
@@ -23,11 +25,12 @@ type ListResponse[T any] struct {
 	Results []T    `json:"data"`
 }
 
-func SendResponse[T any](w http.ResponseWriter, statusCode int, message string, data T) {
+func SendResponse[T any](w http.ResponseWriter, statusCode int, error bool, message string, data T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	response := Response[T]{
 		Code:    statusCode,
+		Error:   error,
 		Message: message,
 		Data:    data,
 	}
@@ -38,11 +41,12 @@ func SendResponse[T any](w http.ResponseWriter, statusCode int, message string, 
 }
 
 func SendListResponse[T any](
-	w http.ResponseWriter, statusCode int, message string, pagination Pagination, total int, results []T) {
+	w http.ResponseWriter, statusCode int, error bool, message string, pagination Pagination, total int, results []T) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	response := ListResponse[T]{
 		Code:    statusCode,
+		Error:   error,
 		Message: message,
 		Offset:  pagination.Offset,
 		Limit:   pagination.Limit,

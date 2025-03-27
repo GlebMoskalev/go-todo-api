@@ -43,7 +43,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Login successful",
                         "schema": {
-                            "$ref": "#/definitions/swagger.TokenResponse"
+                            "$ref": "#/definitions/swagger.LoginResponse"
                         }
                     },
                     "400": {
@@ -95,7 +95,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Tokens refreshed",
                         "schema": {
-                            "$ref": "#/definitions/swagger.TokenResponse"
+                            "$ref": "#/definitions/swagger.RefreshResponse"
                         }
                     },
                     "400": {
@@ -392,7 +392,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Successfully create",
                         "schema": {
-                            "$ref": "#/definitions/swagger.SuccessTodoResponse"
+                            "$ref": "#/definitions/swagger.GetTodoResponse"
                         }
                     },
                     "400": {
@@ -506,6 +506,10 @@ const docTemplate = `{
                 "data": {
                     "$ref": "#/definitions/swagger.createResponse"
                 },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "message": {
                     "type": "string",
                     "example": "Successfully create"
@@ -519,9 +523,33 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 400
                 },
+                "error": {
+                    "type": "boolean",
+                    "example": true
+                },
                 "message": {
                     "type": "string",
                     "example": "Invalid request data"
+                }
+            }
+        },
+        "swagger.GetTodoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.TodoResponse"
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Successfully fetch"
                 }
             }
         },
@@ -555,13 +583,17 @@ const docTemplate = `{
                         "$ref": "#/definitions/swagger.TodoResponse"
                     }
                 },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "limit": {
                     "type": "integer",
                     "example": 20
                 },
                 "message": {
                     "type": "string",
-                    "example": "Ok"
+                    "example": "Successfully fetch"
                 },
                 "offset": {
                     "type": "integer",
@@ -570,6 +602,26 @@ const docTemplate = `{
                 "total": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "swagger.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.tokenResponse"
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Login successful"
                 }
             }
         },
@@ -594,12 +646,36 @@ const docTemplate = `{
                 }
             }
         },
+        "swagger.RefreshResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "example": 200
+                },
+                "data": {
+                    "$ref": "#/definitions/swagger.tokenResponse"
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Tokens refreshed"
+                }
+            }
+        },
         "swagger.ServerErrorResponse": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer",
                     "example": 500
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "message": {
                     "type": "string",
@@ -613,6 +689,10 @@ const docTemplate = `{
                 "code": {
                     "type": "integer",
                     "example": 200
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": false
                 },
                 "message": {
                     "type": "string",
@@ -630,25 +710,13 @@ const docTemplate = `{
                 "data": {
                     "$ref": "#/definitions/swagger.UserData"
                 },
+                "error": {
+                    "type": "boolean",
+                    "example": false
+                },
                 "message": {
                     "type": "string",
                     "example": "User successfully created"
-                }
-            }
-        },
-        "swagger.SuccessTodoResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer",
-                    "example": 200
-                },
-                "data": {
-                    "$ref": "#/definitions/swagger.TodoResponse"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Successfully create"
                 }
             }
         },
@@ -710,25 +778,16 @@ const docTemplate = `{
                 }
             }
         },
-        "swagger.TokenResponse": {
-            "type": "object",
-            "properties": {
-                "access_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"
-                },
-                "refresh_token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"
-                }
-            }
-        },
         "swagger.UnauthorizedResponse": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer",
                     "example": 401
+                },
+                "error": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "message": {
                     "type": "string",
@@ -764,6 +823,19 @@ const docTemplate = `{
                 "id": {
                     "type": "integer",
                     "example": 12
+                }
+            }
+        },
+        "swagger.tokenResponse": {
+            "type": "object",
+            "properties": {
+                "access_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"
+                },
+                "refresh_token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"
                 }
             }
         }

@@ -16,6 +16,9 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/swagger.createResponse'
+      error:
+        example: false
+        type: boolean
       message:
         example: Successfully create
         type: string
@@ -25,8 +28,25 @@ definitions:
       code:
         example: 400
         type: integer
+      error:
+        example: true
+        type: boolean
       message:
         example: Invalid request data
+        type: string
+    type: object
+  swagger.GetTodoResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.TodoResponse'
+      error:
+        example: false
+        type: boolean
+      message:
+        example: Successfully fetch
         type: string
     type: object
   swagger.InvalidIDResponse:
@@ -50,11 +70,14 @@ definitions:
         items:
           $ref: '#/definitions/swagger.TodoResponse'
         type: array
+      error:
+        example: false
+        type: boolean
       limit:
         example: 20
         type: integer
       message:
-        example: Ok
+        example: Successfully fetch
         type: string
       offset:
         example: 0
@@ -62,6 +85,20 @@ definitions:
       total:
         example: 1
         type: integer
+    type: object
+  swagger.LoginResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.tokenResponse'
+      error:
+        example: false
+        type: boolean
+      message:
+        example: Login successful
+        type: string
     type: object
   swagger.NotFoundResponse:
     properties:
@@ -77,11 +114,28 @@ definitions:
       refresh_token:
         type: string
     type: object
+  swagger.RefreshResponse:
+    properties:
+      code:
+        example: 200
+        type: integer
+      data:
+        $ref: '#/definitions/swagger.tokenResponse'
+      error:
+        example: false
+        type: boolean
+      message:
+        example: Tokens refreshed
+        type: string
+    type: object
   swagger.ServerErrorResponse:
     properties:
       code:
         example: 500
         type: integer
+      error:
+        example: true
+        type: boolean
       message:
         example: Something went wrong, please try again later
         type: string
@@ -91,6 +145,9 @@ definitions:
       code:
         example: 200
         type: integer
+      error:
+        example: false
+        type: boolean
       message:
         example: Successfully delete
         type: string
@@ -102,19 +159,11 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/swagger.UserData'
+      error:
+        example: false
+        type: boolean
       message:
         example: User successfully created
-        type: string
-    type: object
-  swagger.SuccessTodoResponse:
-    properties:
-      code:
-        example: 200
-        type: integer
-      data:
-        $ref: '#/definitions/swagger.TodoResponse'
-      message:
-        example: Successfully create
         type: string
     type: object
   swagger.TodoRequest:
@@ -158,20 +207,14 @@ definitions:
         example: Buy groceries
         type: string
     type: object
-  swagger.TokenResponse:
-    properties:
-      access_token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI
-        type: string
-      refresh_token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI
-        type: string
-    type: object
   swagger.UnauthorizedResponse:
     properties:
       code:
         example: 401
         type: integer
+      error:
+        example: true
+        type: boolean
       message:
         example: Invalid credentials
         type: string
@@ -197,6 +240,15 @@ definitions:
         example: 12
         type: integer
     type: object
+  swagger.tokenResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI
+        type: string
+      refresh_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI
+        type: string
+    type: object
 info:
   contact: {}
   description: This is a simple Todo API with authentication.
@@ -221,7 +273,7 @@ paths:
         "200":
           description: Login successful
           schema:
-            $ref: '#/definitions/swagger.TokenResponse'
+            $ref: '#/definitions/swagger.LoginResponse'
         "400":
           description: Invalid request data
           schema:
@@ -255,7 +307,7 @@ paths:
         "200":
           description: Tokens refreshed
           schema:
-            $ref: '#/definitions/swagger.TokenResponse'
+            $ref: '#/definitions/swagger.RefreshResponse'
         "400":
           description: Invalid request data
           schema:
@@ -483,7 +535,7 @@ paths:
         "200":
           description: Successfully create
           schema:
-            $ref: '#/definitions/swagger.SuccessTodoResponse'
+            $ref: '#/definitions/swagger.GetTodoResponse'
         "400":
           description: Invalid ID
           schema:

@@ -22,12 +22,14 @@ type UserData struct {
 
 type SuccessRegisterResponse struct {
 	Code    int      `json:"code" example:"200"`
+	Error   bool     `json:"error" example:"false"`
 	Message string   `json:"message" example:"User successfully created"`
 	Data    UserData `json:"data"`
 }
 
 type ServerErrorResponse struct {
 	Code    int    `json:"code" example:"500"`
+	Error   bool   `json:"error" example:"true"`
 	Message string `json:"message" example:"Something went wrong, please try again later"`
 }
 
@@ -38,16 +40,32 @@ type ConflictResponse struct {
 
 type ErrorResponse struct {
 	Code    int    `json:"code" example:"400"`
+	Error   bool   `json:"error" example:"true"`
 	Message string `json:"message" example:"Invalid request data"`
 }
 
-type TokenResponse struct {
+type tokenResponse struct {
 	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDI5NzU2MjgsImlkIjoiMTE3YzA4Y2EtZWEzNS00MWEyLWI4MDYtM2M5MmRjNTliMzhlIn0.cJ7xWY_V5dkIxrHfcPub--kUWZP4i2ky1nZDGkPL_BI"`
 	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NDM1NzIxMzcsImlkIjoiODE4YmRmNGMtMGI5NC00ZGNiLTk2YmUtMTJhMzFmMDczYWMyIn0.5WCp11fVMXRKMzCzQvltEAC9sN_16u3AtUrMH7Z5JwI"`
 }
 
+type LoginResponse struct {
+	Code    int           `json:"code" example:"200"`
+	Error   bool          `json:"error" example:"false"`
+	Message string        `json:"message" example:"Login successful"`
+	Data    tokenResponse `json:"data"`
+}
+
+type RefreshResponse struct {
+	Code    int           `json:"code" example:"200"`
+	Error   bool          `json:"error" example:"false"`
+	Message string        `json:"message" example:"Tokens refreshed"`
+	Data    tokenResponse `json:"data"`
+}
+
 type UnauthorizedResponse struct {
 	Code    int    `json:"code" example:"401"`
+	Error   bool   `json:"error" example:"true"`
 	Message string `json:"message" example:"Invalid credentials"`
 }
 
@@ -61,6 +79,7 @@ type TodoResponse struct {
 
 type CreateTodoResponse struct {
 	Code    int            `json:"code" example:"200"`
+	Error   bool           `json:"error" example:"false"`
 	Message string         `json:"message" example:"Successfully create"`
 	Data    createResponse `json:"data"`
 }
@@ -69,20 +88,29 @@ type createResponse struct {
 	Id int `json:"id" example:"12"`
 }
 
-type SuccessTodoResponse struct {
+type GetTodoResponse struct {
 	Code    int          `json:"code" example:"200"`
-	Message string       `json:"message" example:"Successfully create"`
+	Error   bool         `json:"error" example:"false"`
+	Message string       `json:"message" example:"Successfully fetch"`
 	Data    TodoResponse `json:"data"`
 }
 
-type SuccessEmptyResponse struct {
+type DeleteResponse struct {
 	Code    int    `json:"code" example:"200"`
+	Error   bool   `json:"error" example:"false"`
 	Message string `json:"message" example:"Successfully delete"`
+}
+
+type UpdateResponse struct {
+	Code    int    `json:"code" example:"200"`
+	Error   bool   `json:"error" example:"false"`
+	Message string `json:"message" example:"Successfully update"`
 }
 
 type ListTodoResponse struct {
 	Code    int            `json:"code" example:"200"`
-	Message string         `json:"message" example:"Ok"`
+	Error   bool           `json:"error" example:"false"`
+	Message string         `json:"message" example:"Successfully fetch"`
 	Offset  int            `json:"offset" example:"0"`
 	Limit   int            `json:"limit" example:"20"`
 	Count   int            `json:"count" example:"1"`
