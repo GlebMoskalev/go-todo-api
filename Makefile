@@ -15,3 +15,8 @@ migration_up:
 
 migration_down:
 	migrate -path migrations -database $(DB_URL) down
+
+test:
+	go test -v ./...
+
+.PHONY: migration_up migration_down test
