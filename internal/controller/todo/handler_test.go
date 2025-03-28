@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"github.com/GlebMoskalev/go-todo-api/internal/entity"
 	"github.com/GlebMoskalev/go-todo-api/internal/middleware"
 	"github.com/GlebMoskalev/go-todo-api/internal/service/mocks"
@@ -15,6 +16,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -560,6 +562,221 @@ func TestUpdate(t *testing.T) {
 				t.Fatalf("Failed to update request: %v", err)
 			}
 			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+tc.inputToken)
+
+			rr := httptest.NewRecorder()
+
+			r.ServeHTTP(rr, req)
+			assert.Equal(t, tc.expectedHTTPStatus, rr.Code)
+			assert.JSONEq(t, tc.expectedResponse, rr.Body.String())
+		})
+	}
+}
+
+func TestGetAll(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	userID := uuid.New()
+
+	testCases := []struct {
+		name                string
+		queryParams         map[string]string
+		inputToken          string
+		prepareTodoService  func(serviceMock *mocks.TodoService)
+		prepareTokenService func(serviceMock *mocks.TokenService)
+		setupMiddleware     func(mux *chi.Mux, tokenServiceMock *mocks.TokenService)
+		expectedHTTPStatus  int
+		expectedResponse    string
+	}{
+		{
+			name: "successful get all todos",
+			queryParams: map[string]string{
+				"limit":  "10",
+				"offset": "0",
+			},
+			inputToken: "valid_token",
+			prepareTodoService: func(serviceMock *mocks.TodoService) {
+				serviceMock.On("GetAll",
+					mock.MatchedBy(func(ctx context.Context) bool {
+						_, ok := ctx.Value("id").(uuid.UUID)
+						return ok
+					}),
+					userID,
+					entity.Pagination{Offset: 0, Limit: 10},
+					entity.Filters{},
+				).Return(
+					[]entity.Todo{
+						{
+							ID:          12,
+							Title:       "Buy groceries",
+							Description: "Get milk, bread, and eggs",
+							DueDate:     &entity.Date{Time: time.Date(2025, 4, 1, 0, 0, 0, 0, time.UTC)},
+							Tags:        []string{"shopping", "urgent"},
+						},
+					},
+					1,
+					nil,
+				)
+			},
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusOK,
+			expectedResponse: `{
+                "code": 200,
+                "count": 1,
+                "data": [
+                    {
+                        "id": 12,
+                        "title": "Buy groceries",
+                        "description": "Get milk, bread, and eggs",
+                        "due_date": "2025-04-01",
+                        "tags": ["shopping", "urgent"]
+                    }
+                ],
+                "error": false,
+                "limit": 10,
+                "message": "Successfully fetch",
+                "offset": 0,
+                "total": 1
+            }`,
+		},
+		{
+			name: "invalid query parameters - limit",
+			queryParams: map[string]string{
+				"limit":  "invalid",
+				"offset": "0",
+			},
+			inputToken: "valid_token",
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusBadRequest,
+			expectedResponse: `{
+                "code": 400,
+                "error": true,
+                "message": "Invalid limit parameter"
+            }`,
+		},
+		{
+			name:               "missing authorization",
+			queryParams:        map[string]string{},
+			expectedHTTPStatus: http.StatusUnauthorized,
+			expectedResponse: `{
+                "code": 401,
+                "error": true,
+                "message": "User not authenticated"
+            }`,
+		},
+		{
+			name: "invalid query parameters - limit",
+			queryParams: map[string]string{
+				"limit":  "invalid",
+				"offset": "0",
+			},
+			inputToken: "valid_token",
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusBadRequest,
+			expectedResponse: `{
+                "code": 400,
+                "error": true,
+                "message": "Invalid limit parameter"
+            }`,
+		},
+		{
+			name:               "missing authorization",
+			queryParams:        map[string]string{},
+			expectedHTTPStatus: http.StatusUnauthorized,
+			expectedResponse: `{
+                "code": 401,
+                "error": true,
+                "message": "User not authenticated"
+            }`,
+		},
+		{
+			name: "internal server error",
+			queryParams: map[string]string{
+				"limit":  "20",
+				"offset": "0",
+			},
+			inputToken: "valid_token",
+			prepareTodoService: func(serviceMock *mocks.TodoService) {
+				serviceMock.On("GetAll",
+					mock.MatchedBy(func(ctx context.Context) bool {
+						_, ok := ctx.Value("id").(uuid.UUID)
+						return ok
+					}),
+					userID,
+					entity.Pagination{Offset: 0, Limit: 20},
+					entity.Filters{},
+				).Return(
+					[]entity.Todo{},
+					0,
+					errors.New("database error"),
+				)
+			},
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusInternalServerError,
+			expectedResponse: `{
+                "code": 500,
+                "error": true,
+                "message": "Something went wrong, please try again later"
+            }`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			todoServiceMock := mocks.NewTodoService(t)
+			tokenServiceMock := mocks.NewTokenService(t)
+
+			if tc.prepareTodoService != nil {
+				tc.prepareTodoService(todoServiceMock)
+			}
+			if tc.prepareTokenService != nil {
+				tc.prepareTokenService(tokenServiceMock)
+			}
+
+			handler := NewHandler(todoServiceMock, logger)
+
+			r := chi.NewRouter()
+			if tc.setupMiddleware != nil {
+				tc.setupMiddleware(r, tokenServiceMock)
+			}
+			r.Get("/todos", handler.GetAll)
+
+			url := "/todos"
+			if len(tc.queryParams) > 0 {
+				queryParts := []string{}
+				for k, v := range tc.queryParams {
+					queryParts = append(queryParts, fmt.Sprintf("%s=%s", k, v))
+				}
+				url += "?" + strings.Join(queryParts, "&")
+			}
+
+			req, err := http.NewRequest("GET", url, nil)
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
 			req.Header.Set("Authorization", "Bearer "+tc.inputToken)
 
 			rr := httptest.NewRecorder()
