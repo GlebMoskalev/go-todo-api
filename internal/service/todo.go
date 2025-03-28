@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate go run github.com/vektra/mockery/v2 --name=TodoService --output=./mocks
 type TodoService interface {
 	Get(ctx context.Context, userID uuid.UUID, id int) (entity.Todo, error)
 	Create(ctx context.Context, userID uuid.UUID, todo entity.Todo) (int, error)

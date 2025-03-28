@@ -113,7 +113,10 @@ func TestRegister(t *testing.T) {
 			}
 
 			handler := NewHandler(userServiceMock, tokenServiceMock, logger)
-			req, _ := http.NewRequest("POST", "auth/register", bytes.NewBufferString(tc.input))
+			req, err := http.NewRequest("POST", "auth/register", bytes.NewBufferString(tc.input))
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
 			rr := httptest.NewRecorder()
 
 			handler.Register(rr, req)
@@ -244,7 +247,10 @@ func TestLogin(t *testing.T) {
 			}
 
 			handler := NewHandler(userServiceMock, tokenServiceMock, logger)
-			req, _ := http.NewRequest("POST", "auth/login", bytes.NewBufferString(tc.input))
+			req, err := http.NewRequest("POST", "auth/login", bytes.NewBufferString(tc.input))
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
 			rr := httptest.NewRecorder()
 
 			handler.Login(rr, req)
@@ -306,7 +312,10 @@ func TestRefresh(t *testing.T) {
 			}
 
 			handler := NewHandler(userServiceMock, tokenServiceMock, logger)
-			req, _ := http.NewRequest("POST", "auth/refresh", bytes.NewBufferString(tc.input))
+			req, err := http.NewRequest("POST", "auth/refresh", bytes.NewBufferString(tc.input))
+			if err != nil {
+				t.Fatalf("Failed to create request: %v", err)
+			}
 			rr := httptest.NewRecorder()
 			handler.Refresh(rr, req)
 
