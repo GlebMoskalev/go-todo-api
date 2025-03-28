@@ -16,7 +16,10 @@ migration_up:
 migration_down:
 	migrate -path migrations -database $(DB_URL) down
 
+build:
+	go build -o ./cmd/app ./cmd/main.go
+
 test:
 	go test -v ./...
 
-.PHONY: migration_up migration_down test
+.PHONY: migration_up migration_down test build
