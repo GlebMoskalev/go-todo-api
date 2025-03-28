@@ -421,3 +421,152 @@ func TestCreate(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdate(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
+	userID := uuid.New()
+
+	testCases := []struct {
+		name                string
+		inputRequest        string
+		inputToken          string
+		prepareTodoService  func(serviceMock *mocks.TodoService)
+		prepareTokenService func(serviceMock *mocks.TokenService)
+		setupMiddleware     func(mux *chi.Mux, tokenServiceMock *mocks.TokenService)
+		expectedHTTPStatus  int
+		expectedResponse    string
+	}{
+		{
+			name:         "successful update",
+			inputRequest: `{"id":12,"title":"test","description":"test","due_date":"2025-04-02","tags":["updated","test"]}`,
+			inputToken:   "valid_token",
+			prepareTodoService: func(serviceMock *mocks.TodoService) {
+				serviceMock.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+					_, ok := ctx.Value("id").(uuid.UUID)
+					return ok
+				}), userID, mock.AnythingOfType("entity.Todo")).
+					Return(nil)
+			},
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusOK,
+			expectedResponse:   `{"code":200,"error":false,"message":"Successfully update"}`,
+		},
+		{
+			name:               "missing authorization",
+			inputRequest:       `{"id":12,"title":"test","description":"test","due_date":"2025-04-02","tags":["updated","test"]}`,
+			expectedHTTPStatus: http.StatusUnauthorized,
+			expectedResponse:   `{"code":401,"error":true,"message":"User not authenticated"}`,
+		},
+		{
+			name:         "invalid todo",
+			inputRequest: `{"id":12,"description":"updated desc","due_date":"2025-04-02","tags":["updated","test"]}`,
+			inputToken:   "valid_token",
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusBadRequest,
+			expectedResponse:   `{"code":400,"error":true,"message":"Validation error: Field 'title' is required"}`,
+		},
+		{
+			name:         "todo not found",
+			inputRequest: `{"id":12,"title":"updated","description":"updated desc","due_date":"2025-04-02","tags":["updated","test"]}`,
+			inputToken:   "valid_token",
+			prepareTodoService: func(serviceMock *mocks.TodoService) {
+				serviceMock.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+					_, ok := ctx.Value("id").(uuid.UUID)
+					return ok
+				}), userID, mock.AnythingOfType("entity.Todo")).
+					Return(entity.ErrTodoNotFound)
+			},
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusNotFound,
+			expectedResponse:   `{"code":404,"error":true,"message":"Todo not found"}`,
+		},
+		{
+			name:         "internal server",
+			inputRequest: `{"id":12,"title":"updated","description":"updated desc","due_date":"2025-04-02","tags":["updated","test"]}`,
+			inputToken:   "valid_token",
+			prepareTodoService: func(serviceMock *mocks.TodoService) {
+				serviceMock.On("Update", mock.MatchedBy(func(ctx context.Context) bool {
+					_, ok := ctx.Value("id").(uuid.UUID)
+					return ok
+				}), userID, mock.AnythingOfType("entity.Todo")).
+					Return(errors.New("internal server"))
+			},
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusInternalServerError,
+			expectedResponse:   `{"code":500,"error":true,"message":"Something went wrong, please try again later"}`,
+		},
+		{
+			name:         "invalid json body",
+			inputRequest: `{"id":12,"title":"updated","description":"updated desc","due_date":"2025-04-02","tags":"not_an_array"}`,
+			inputToken:   "valid_token",
+			prepareTokenService: func(serviceMock *mocks.TokenService) {
+				serviceMock.On("ValidateAccessToken", "valid_token").
+					Return(userID, nil)
+			},
+			setupMiddleware: func(mux *chi.Mux, tokenServiceMock *mocks.TokenService) {
+				mux.Use(middleware.AuthMiddleware(tokenServiceMock))
+			},
+			expectedHTTPStatus: http.StatusBadRequest,
+			expectedResponse:   `{"code":400,"error":true,"message":"Invalid json format"}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			todoServiceMock := mocks.NewTodoService(t)
+			tokenServiceMock := mocks.NewTokenService(t)
+
+			if tc.prepareTodoService != nil {
+				tc.prepareTodoService(todoServiceMock)
+			}
+			if tc.prepareTokenService != nil {
+				tc.prepareTokenService(tokenServiceMock)
+			}
+
+			handler := NewHandler(todoServiceMock, logger)
+
+			r := chi.NewRouter()
+			if tc.setupMiddleware != nil {
+				tc.setupMiddleware(r, tokenServiceMock)
+			}
+			r.Post("/todos", handler.Update)
+
+			req, err := http.NewRequest("POST", "/todos", bytes.NewBufferString(tc.inputRequest))
+			if err != nil {
+				t.Fatalf("Failed to update request: %v", err)
+			}
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", "Bearer "+tc.inputToken)
+
+			rr := httptest.NewRecorder()
+
+			r.ServeHTTP(rr, req)
+			assert.Equal(t, tc.expectedHTTPStatus, rr.Code)
+			assert.JSONEq(t, tc.expectedResponse, rr.Body.String())
+		})
+	}
+}
